@@ -68,9 +68,8 @@ class AccessService {
     const foundUser = await findByEmail({
       email,
     });
-    console.log("foundUser", foundUser);
     if (!foundUser) {
-      throw new badRequestError("user not registered");
+      throw new NotFoundError("user not registered");
     }
     if (foundUser.status !== "active")
       throw new badRequestError("Tài khoản bị khóa");
