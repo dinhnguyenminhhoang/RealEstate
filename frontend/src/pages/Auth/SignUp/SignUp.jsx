@@ -60,7 +60,6 @@ const SignUp = () => {
           const path = err.path[0];
           errors[path] = err.message;
         });
-
         form.setFields(
           Object.entries(errors).map(([name, error]) => ({
             name,
