@@ -4,69 +4,98 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Button, Checkbox, Form, Input, message, Typography } from "antd";
-import React from "react";
+import { Button, Cascader, Checkbox, Form, Input, message } from "antd";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import * as z from "zod";
 import useAuthForm from "../../../hooks/useAuthForm";
 
-const { Title, Text } = Typography;
-
 const signupSchema = z
   .object({
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(30, "Username cannot exceed 30 characters"),
-    email: z.string().email("Please enter a valid email address"),
+    userName: z.string().min(3).max(30),
+    email: z.string().email(),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(
-        /[^A-Za-z0-9]/,
-        "Password must contain at least one special character"
-      ),
+      .min(8)
+      .regex(/[A-Z]/, "At least one uppercase letter")
+      .regex(/[0-9]/, "At least one number")
+      .regex(/[^A-Za-z0-9]/, "At least one special character"),
     confirmPassword: z.string(),
-    phone: z
-      .string()
-      .regex(/^\d{10}$/, "Please enter a valid 10-digit phone number"),
-    agreeTerms: z.boolean().refine((val) => val === true, {
-      message: "You must agree to the terms and conditions",
+    phone: z.string().regex(/^\d{10}$/, "10-digit phone number"),
+    address: z
+      .array(z.string())
+      .min(3, "Please select your full address (Province/District/Ward)"),
+    taxCode: z.string().optional(),
+    detailAddress: z.string().optional(),
+    agreeTerms: z.literal(true, {
+      errorMap: () => ({
+        message: "You must agree to the terms and conditions",
+      }),
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
     path: ["confirmPassword"],
+    message: "Passwords do not match",
   });
 
 const SignUp = () => {
   const [form] = Form.useForm();
   const { loading, handleSignUp } = useAuthForm();
-  const navigator = useNavigate();
+  const navigate = useNavigate();
+  const [locationOptions, setLocationOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const res = await axios.get(
+          "https://provinces.open-api.vn/api/?depth=3"
+        );
+        const options = res.data.map((province) => ({
+          label: province.name,
+          value: province.name,
+          children: province.districts.map((district) => ({
+            label: district.name,
+            value: district.name,
+            children: district.wards.map((ward) => ({
+              label: ward.name,
+              value: ward.name,
+            })),
+          })),
+        }));
+        setLocationOptions(options);
+      } catch (error) {
+        message.error("Failed to load location data");
+      }
+    };
+
+    fetchProvinces();
+  }, []);
+
   const handleSubmit = async (values) => {
     try {
       signupSchema.parse(values);
+      values.address = [...values.address, values.detailAddress]
+        .join(", ")
+        .replace(", " + values.detailAddress, " " + values.detailAddress);
       const success = await handleSignUp(values);
       if (success) {
-        navigator("/signin");
+        navigate("/signin");
       }
       form.resetFields();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errors = {};
+        const fieldErrors = {};
         error.errors.forEach((err) => {
           const path = err.path[0];
-          errors[path] = err.message;
+          fieldErrors[path] = err.message;
         });
         form.setFields(
-          Object.entries(errors).map(([name, error]) => ({
+          Object.entries(fieldErrors).map(([name, error]) => ({
             name,
             errors: [error],
           }))
         );
-
         message.error("Please fix the errors in the form");
       } else {
         message.error("Something went wrong. Please try again.");
@@ -120,14 +149,14 @@ const SignUp = () => {
             className="space-y-6"
           >
             <Form.Item
-              name="username"
+              name="userName"
               rules={[
-                { required: true, message: "Please enter your username" },
+                { required: true, message: "Please enter your userName" },
               ]}
             >
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="Username"
+                placeholder="UserName"
                 size="large"
                 className="rounded-lg"
               />
@@ -182,6 +211,34 @@ const SignUp = () => {
               <Input.Password
                 prefix={<LockOutlined className="text-gray-400" />}
                 placeholder="Confirm Password"
+                size="large"
+                className="rounded-lg"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="address"
+              rules={[
+                { required: true, message: "Please select your address" },
+              ]}
+            >
+              <Cascader
+                options={locationOptions}
+                placeholder="Select your address"
+                size="large"
+                className="w-full rounded-lg"
+              />
+            </Form.Item>
+            <Form.Item name="detailAddress">
+              <Input
+                placeholder="Detailed Address (e.g. 123 ABC Street)"
+                size="large"
+                className="rounded-lg"
+              />
+            </Form.Item>
+            <Form.Item name="taxCode">
+              <Input
+                placeholder="Tax Code (Optional)"
                 size="large"
                 className="rounded-lg"
               />

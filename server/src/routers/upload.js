@@ -2,7 +2,7 @@
 
 const express = require("express");
 const { asynchandler } = require("../helpers/asynchandler");
-const { adminAuthentication } = require("../auth/authUtils");
+const { adminAuthentication, authentication } = require("../auth/authUtils");
 const uploadController = require("../controller/upload.controller");
 const path = require("path");
 const fs = require("fs");
@@ -34,8 +34,8 @@ router.use("/uploads", express.static(uploadsDir));
 // Endpoint upload file
 router.post(
   "/upload",
-  adminAuthentication, // Xác thực trước
-  upload.array("file", 10), // Cho phép upload tối đa 10 file
+  authentication,
+  upload.array("file", 10),
   asynchandler(uploadController.uploadProduct)
 );
 

@@ -27,10 +27,7 @@ export const useAuthForm = () => {
     setLoading(true);
     try {
       const response = await signupApi({
-        userName: values.username,
-        email: values.email,
-        password: values.password,
-        phone: values.phone,
+        ...values,
       });
 
       if (response.status === 201) {

@@ -22,12 +22,22 @@ const userSchema = new Schema(
     },
     phone: {
       type: String,
-      required: false,
+      required: true,
     },
+    address: {
+      type: String,
+      required: true,
+    },
+    avatar: String,
+    taxCode: String,
     status: {
       type: String,
       enum: ["active", "inActive"],
       default: "active",
+    },
+    verification: {
+      type: Boolean,
+      default: false,
     },
     roles: {
       type: [String],
@@ -35,6 +45,13 @@ const userSchema = new Schema(
       default: ["USER"],
     },
     reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    invoiceInformation: {
+      invoiceName: String,
+      invoiceEmail: String,
+      companyName: String,
+      companyTaxCode: String,
+      address: String,
+    },
   },
   { timestamps: true, collection: COLLECTION_NAME }
 );

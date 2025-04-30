@@ -1,39 +1,39 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { message } from "antd";
 import Cookie from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import React, { createContext, useContext, useEffect, useState } from "react";
 import useNotification from "../hooks/useNotification";
 import { signinApi } from "../services/authService";
+import { getUserProfileAPi } from "../services/userService";
 
 // Create context
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
+
+const isTokenExpired = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    return decoded.exp * 1000 < Date.now();
+  } catch (error) {
+    return true;
+  }
+};
+
+const getTokenAndUserId = () => ({
+  token: Cookie.get("token"),
+  userId: Cookie.get("userId"),
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const openNotification = useNotification();
-  const isTokenExpired = (token) => {
-    try {
-      const decoded = jwtDecode(token);
-      return decoded.exp * 1000 < Date.now() ? false : true;
-    } catch (error) {
-      openNotification({
-        type: "error",
-        message: "Thông báo",
-        error: error,
-      });
-      return true;
-    }
-  };
 
   const login = async (email, password) => {
     try {
       setLoading(true);
       const response = await signinApi({ email, password });
       if (response.status === 200) {
-        console.log("Login response:", response);
         const { tokens, user } = response.data;
         Cookie.set("token", tokens?.accessToken);
         Cookie.set("userId", user._id);
@@ -41,18 +41,13 @@ export const AuthProvider = ({ children }) => {
         openNotification({
           type: "success",
           message: "Thông báo",
-          description: "Đăng nhap thành công",
+          description: "Đăng nhập thành công",
         });
         return true;
-      } else {
-        return false;
       }
+      return false;
     } catch (error) {
-      openNotification({
-        type: "error",
-        message: "Thông báo",
-        error: error,
-      });
+      openNotification({ type: "error", message: "Thông báo", error });
       return false;
     } finally {
       setLoading(false);
@@ -63,54 +58,66 @@ export const AuthProvider = ({ children }) => {
     Cookie.remove("token");
     Cookie.remove("userId");
     setUser(null);
-    message.success("Logged out successfully");
+    openNotification({
+      type: "success",
+      message: "Thông báo",
+      description: "Đăng xuất thành công",
+    });
   };
 
   const checkToken = () => {
-    const token = Cookie.get("token");
-    if (!token) return false;
-
-    if (isTokenExpired(token)) {
+    const { token } = getTokenAndUserId();
+    if (!token || isTokenExpired(token)) {
       logout();
       return false;
     }
-
     return true;
   };
 
-  // Get user profile
-  const getUserProfile = async () => {
+  const validateAndFetchUser = async () => {
+    const { token, userId } = getTokenAndUserId();
+    if (!token || !userId || isTokenExpired(token)) {
+      logout();
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (!checkToken()) return null;
-
-      //   const userId = Cookie.get("userId");
-      //   const response = await api.get(`/users/${userId}`);
-
-      //   if (response.status === "success") {
-      //     setUser(response.data.user);
-      //     return response.data.user;
-      //   }
-      return null;
+      const response = await getUserProfileAPi();
+      if (response.status === 200) {
+        setUser(response.data);
+      } else {
+        logout();
+      }
     } catch (error) {
-      console.error("Get user profile error:", error);
-      return null;
+      console.error("Tự động đăng nhập lỗi:", error);
+      logout();
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    logout,
-    checkToken,
-    getUserProfile,
-    isAuthenticated: !!user,
-  };
+  useEffect(() => {
+    validateAndFetchUser();
+  }, []);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        checkToken,
+        getUserProfile: validateAndFetchUser,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Protected Route component to use with React Router
 export const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -120,10 +127,7 @@ export const ProtectedRoute = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+  if (loading) return <div>Loading...</div>;
   return isAuthenticated ? children : null;
 };
 

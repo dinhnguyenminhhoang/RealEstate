@@ -13,6 +13,11 @@ class UserService {
       userName: 1,
       phone: 1,
       email: 1,
+      address: 1,
+      avatar: 1,
+      taxCode: 1,
+      invoiceInformation: 1,
+      avatar: 1,
     });
   };
   static updateProfile = async (payload, user) => {

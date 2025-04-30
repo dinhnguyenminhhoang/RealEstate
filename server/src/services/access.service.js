@@ -24,7 +24,14 @@ const RolesUser = {
 };
 
 class AccessService {
-  static singUp = async ({ userName, email, phone, password }) => {
+  static singUp = async ({
+    userName,
+    email,
+    phone,
+    password,
+    address,
+    taxCode,
+  }) => {
     const hodelUser = await User.findOne({ email }).lean();
     if (hodelUser) {
       throw new badRequestError("error user already rigisted");
@@ -36,7 +43,9 @@ class AccessService {
       phone,
       password: passwordHash,
       roles: [RolesUser.USER],
-      status: "inActive",
+      address,
+      taxCode,
+      status: "active",
     });
     const key = crypto.randomBytes(64).toString(`hex`);
     const tokens = await createTokenPair(
@@ -149,7 +158,7 @@ class AccessService {
     if (!userExiting?._id && userId) throw new NotFoundError("Not found User");
     const userUpdated = await User.findOneAndUpdate(userExiting._id, {
       ...userExiting,
-      status: "active",
+      verification: true,
     });
     if (userUpdated) {
       await KeyTokenService.removeKeyById(keyStore._id);

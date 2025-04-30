@@ -24,7 +24,7 @@ class CategoryService {
       page: +page,
       filters,
       options,
-      populate: ["products"],
+      // populate: ["posts"],
     });
     return categories;
   };
