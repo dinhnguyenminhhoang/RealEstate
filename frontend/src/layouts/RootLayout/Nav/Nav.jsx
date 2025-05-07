@@ -24,8 +24,8 @@ const Nav = () => {
 
   const userMenu = (
     <Menu onClick={handleMenuClick}>
-      <Menu.Item key="profile">Trang cá nhân</Menu.Item>
-      <Menu.Item key="post">Quản lí đăng tin</Menu.Item>
+      <Menu.Item key="user/dashboard">Trang cá nhân</Menu.Item>
+      <Menu.Item key="user/manage-post">Quản lí đăng tin</Menu.Item>
       <Menu.Item key="logout">Đăng xuất</Menu.Item>
     </Menu>
   );
@@ -45,13 +45,13 @@ const Nav = () => {
             {/* Main Navigation */}
             <nav className="hidden lg:flex space-x-6">
               <Link
-                to="/property-list"
+                to="/property-list/SELL"
                 className="font-medium hover:text-red-600"
               >
                 Nhà đất bán
               </Link>
               <Link
-                to="/property-list"
+                to="/property-list/RENT"
                 className="font-medium hover:text-red-600"
               >
                 Nhà đất cho thuê
@@ -78,21 +78,22 @@ const Nav = () => {
                 </Button>
               </Dropdown>
             ) : (
-              <Button
-                onClick={() => navigate("/signin")}
-                type="primary"
-                danger
-                className="flex items-center"
-              >
-                <UserOutlined />
-                <span className="ml-1">Đăng nhập</span>
-              </Button>
+              <>
+                <Button
+                  onClick={() => navigate("/signin")}
+                  type="primary"
+                  danger
+                  className="flex items-center"
+                >
+                  <UserOutlined />
+                  <span className="ml-1">Đăng nhập</span>
+                </Button>
+                <Button danger className="hidden md:flex items-center">
+                  <PlusOutlined />
+                  <span className="ml-1">Đăng tin</span>
+                </Button>
+              </>
             )}
-
-            <Button danger className="hidden md:flex items-center">
-              <PlusOutlined />
-              <span className="ml-1">Đăng tin</span>
-            </Button>
           </div>
         </div>
       </div>

@@ -13,8 +13,16 @@ import SignUp from "./pages/Auth/SignUp/SignUp";
 import Home from "./pages/Home/Home";
 import PropertyDetailPage from "./pages/PropertyDetail/PropertyDetail";
 import PropertyListing from "./pages/PropertyListing/PropertyListing";
-import Profile from "./pages/User/Profile/Profile";
+import CreateOrUpdatePost from "./pages/User/CreateOrUpdatePost/CreateOrUpdatePost";
 import Dashboard from "./pages/User/Dashboard/Dashboard";
+import UserManagePost from "./pages/User/ManagePost/ManagePost";
+import Profile from "./pages/User/Profile/Profile";
+import AdminLayout from "./layouts/AdminLayout/AdminLayout";
+import ManagerUser from "./pages/Admin/ManageUser/ManageUser";
+import ManageCategory from "./pages/Admin/ManageCategory/ManageCategory";
+import ManagePost from "./pages/Admin/ManagePost/ManagePost";
+import ManageNews from "./pages/Admin/ManageNews/ManageNews";
+import NewsDetails from "./pages/NewsDetail/NewsDetails";
 
 const App = () => {
   const router = createBrowserRouter(
@@ -31,11 +39,21 @@ const App = () => {
             path="/property-detail/:name/:id"
             element={<PropertyDetailPage />}
           />
-          <Route path="/property-list" element={<PropertyListing />} />
+          <Route path="/property-list/:type" element={<PropertyListing />} />
+          <Route path="/news/:id" element={<NewsDetails />} />
         </Route>
         <Route element={<UserLayout />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/user/dashboard" element={<Dashboard />} />
+          <Route path="/user/action-post" element={<CreateOrUpdatePost />} />
+          <Route path="/user/manage-post" element={<UserManagePost />} />
+        </Route>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/users" element={<ManagerUser />} />
+          <Route path="/admin/categories" element={<ManageCategory />} />
+          <Route path="/admin/posts" element={<ManagePost />} />
+          <Route path="/admin/news" element={<ManageNews />} />
         </Route>
       </Route>
     )

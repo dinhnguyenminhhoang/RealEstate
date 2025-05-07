@@ -1,8 +1,8 @@
 import { UploadOutlined } from "@ant-design/icons";
 import { Avatar, Button, message, Upload } from "antd";
 import React, { useState } from "react";
-import { IMAGEURL } from "../../utils/constant";
 import instance from "../../config/instance";
+import { BASEIMAGE } from "../../utils";
 
 const UploadAvatar = ({ onUpdate, currentAvatar }) => {
   const [fileList, setFileList] = useState([]);
@@ -67,7 +67,7 @@ const UploadAvatar = ({ onUpdate, currentAvatar }) => {
     <div className="flex flex-col items-center">
       <Avatar
         size={100}
-        src={avatarUrl ? `${IMAGEURL}${avatarUrl}` : null}
+        src={avatarUrl ? `${BASEIMAGE}${avatarUrl}` : null}
         className="mb-4"
       >
         {!avatarUrl && (currentAvatar ? currentAvatar[0]?.toUpperCase() : "U")}

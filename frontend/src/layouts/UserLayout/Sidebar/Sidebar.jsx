@@ -1,38 +1,21 @@
 import {
-  DashboardOutlined,
   AppstoreOutlined,
+  DashboardOutlined,
   PlusOutlined,
-  UserOutlined,
-  TeamOutlined,
   SolutionOutlined,
 } from "@ant-design/icons";
-import { Badge } from "antd";
 import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
   { label: "Tổng quan", icon: <DashboardOutlined />, path: "/user/dashboard" },
-  { label: "Tin đăng", icon: <AppstoreOutlined />, path: "/user/postings" },
-  { label: "Đăng tin", icon: <PlusOutlined />, path: "/user/post" },
-  { label: "Khách hàng", icon: <UserOutlined />, path: "/user/customers" },
-  {
-    label: "Gói Hội viên",
-    icon: (
-      <Badge
-        count="-39%"
-        offset={[8, -5]}
-        style={{ backgroundColor: "#f5222d", fontWeight: "bold" }}
-      >
-        <TeamOutlined />
-      </Badge>
-    ),
-    path: "/user/membership",
-  },
-  { label: "Tài khoản", icon: <SolutionOutlined />, path: "/account" },
+  { label: "Tin đăng", icon: <AppstoreOutlined />, path: "/user/manage-post" },
+  { label: "Đăng tin", icon: <PlusOutlined />, path: "/user/action-post" },
+  { label: "Tài khoản", icon: <SolutionOutlined />, path: "/profile" },
 ];
 
 const Sidebar = () => {
   const location = useLocation();
-
+  
   return (
     <aside className="w-[90px] h-screen bg-white shadow-md flex flex-col items-center py-4 fixed">
       <img

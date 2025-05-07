@@ -10,6 +10,7 @@ const paginate = async ({
   searchFields = [],
   searchById = false,
   filters = {},
+  sort = null, // Added sort parameter
 }) => {
   const skip = (page - 1) * limit;
 
@@ -46,8 +47,15 @@ const paginate = async ({
   const queryChain = model
     .find(query, projection, options)
     .skip(skip)
-    .limit(limit)
-    .lean();
+    .limit(limit);
+
+  // Apply sorting if provided
+  if (sort) {
+    queryChain.sort(sort);
+  }
+
+  // Apply lean for performance
+  queryChain.lean();
 
   if (populate) {
     queryChain.populate(populate);

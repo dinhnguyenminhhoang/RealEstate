@@ -18,7 +18,6 @@ const isTokenExpired = (token) => {
     return true;
   }
 };
-
 const getTokenAndUserId = () => ({
   token: Cookie.get("token"),
   userId: Cookie.get("userId"),
@@ -26,6 +25,7 @@ const getTokenAndUserId = () => ({
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const openNotification = useNotification();
 
@@ -43,7 +43,8 @@ export const AuthProvider = ({ children }) => {
           message: "Thông báo",
           description: "Đăng nhập thành công",
         });
-        return true;
+        const decoded = jwtDecode(tokens.accessToken);
+        return decoded?.role || true;
       }
       return false;
     } catch (error) {
@@ -53,16 +54,19 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+  const checkRole = (accessToken) => {
+    try {
+      const token = accessToken || Cookie.get("token");
+      const decoded = jwtDecode(token);
+      if (decoded?.role) {
+        setRole(decoded?.role);
+      }
+    } catch (error) {}
+  };
   const logout = () => {
     Cookie.remove("token");
     Cookie.remove("userId");
     setUser(null);
-    openNotification({
-      type: "success",
-      message: "Thông báo",
-      description: "Đăng xuất thành công",
-    });
   };
 
   const checkToken = () => {
@@ -99,18 +103,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     validateAndFetchUser();
+    checkRole();
   }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        role,
         loading,
         login,
         logout,
         checkToken,
         getUserProfile: validateAndFetchUser,
         isAuthenticated: !!user,
+        checkRole,
       }}
     >
       {children}

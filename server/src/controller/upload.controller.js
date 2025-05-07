@@ -1,7 +1,7 @@
 const { SuccessResponse } = require("../core/success.response");
 
 class UploadController {
-  uploadProduct = async (req, res, next) => {
+  uploadImages = async (req, res, next) => {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }

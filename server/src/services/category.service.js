@@ -4,6 +4,7 @@ const { default: mongoose } = require("mongoose");
 const { NotFoundError } = require("../core/error.response");
 const { paginate } = require("../utils/paginate");
 const { Category } = require("../models/category.model");
+const { unGetSelectData } = require("../utils");
 
 class CategoryService {
   static createNewCategory = async (data) => {
@@ -24,7 +25,7 @@ class CategoryService {
       page: +page,
       filters,
       options,
-      // populate: ["posts"],
+      projection: unGetSelectData(["__v", "status"]),
     });
     return categories;
   };

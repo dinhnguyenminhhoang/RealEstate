@@ -1,20 +1,10 @@
-import {
-  Avatar,
-  Button,
-  Cascader,
-  Form,
-  Input,
-  Upload,
-  message,
-  Spin,
-} from "antd";
-import { UploadOutlined } from "@ant-design/icons";
-import { useEffect, useState, useCallback } from "react";
+import { Button, Cascader, Form, Input, message, Spin } from "antd";
+import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { useAuth } from "../../../context/AuthContext";
-import axios from "axios";
-import UploadAvatar from "../../../components/UploadImage/UploadImage";
 import { updateUserProfileApi } from "../../../services/userService";
+import UploadAvatar from "../../../components/UploadAvatar/UploadAvatar";
 
 // Schema validation với thông báo tiếng Việt
 const profileSchema = z.object({

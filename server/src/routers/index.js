@@ -7,5 +7,7 @@ router.use(`/v1/api`, require("./user"));
 router.use(`/v1/api`, require("./upload"));
 router.use(`/v1/api`, require("./report"));
 router.use(`/v1/api`, require("./category"));
+router.use(`/v1/api`, require("./post"));
+router.use(`/v1/api`, require("./news"));
 
 module.exports = router;

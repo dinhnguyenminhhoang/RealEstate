@@ -4,6 +4,7 @@ import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import * as z from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthForm from "../../../hooks/useAuthForm";
+import { useAuth } from "../../../context/AuthContext";
 
 const { Title, Text } = Typography;
 
@@ -16,12 +17,15 @@ const signInSchema = z.object({
 const SignIn = () => {
   const [form] = Form.useForm();
   const { loading, handleSignIn } = useAuthForm();
+  const { role } = useAuth();
   const navigator = useNavigate();
   const handleSubmit = async (values) => {
     try {
       signInSchema.parse(values);
       const success = await handleSignIn(values);
-      if (success) {
+      if (success && success.includes("ADMIN")) {
+        navigator("/admin/dashboard");
+      } else if (success) {
         navigator("/");
       }
     } catch (error) {

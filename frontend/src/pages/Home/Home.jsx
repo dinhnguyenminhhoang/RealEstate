@@ -1,106 +1,136 @@
 import {
   ArrowRightOutlined,
-  BankOutlined,
   DollarOutlined,
-  EnvironmentOutlined,
   FilterOutlined,
-  HeartOutlined,
   HomeOutlined,
   SearchOutlined,
-  StarOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Input, Select, Tabs, Tag } from "antd";
-import React, { useState } from "react";
-import placeholder_image from "../../assets/images/placeholder-home-banner_desktop.jpg";
+import { Button, Cascader, Pagination, Select, Tabs, Tag } from "antd";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import placeholder_image from "../../assets/images/placeholder-home-banner_desktop.jpg";
+import PostCard from "../../components/PostCard/PostCard";
+import { getAllCategoryApi } from "../../services/categoryService";
+import {
+  getAllPostAPi,
+  getPostOutstandingAPi,
+} from "../../services/postService";
+import { BASEIMAGE, fetchCity } from "../../utils";
+import { getAllNewsApi } from "../../services/newsService";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
 
 export default function BatDongSanHomepage() {
-  const [activeTab, setActiveTab] = useState("buy");
-  const navigator = useNavigate();
-  const featuredProjects = [
-    {
-      id: 1,
-      name: "Vinhomes Ocean Park",
-      location: "Hà Nội",
-      price: "35 triệu/m²",
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 2,
-      name: "Masteri Centre Point",
-      location: "TP HCM",
-      price: "45 triệu/m²",
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 3,
-      name: "Eco Green Saigon",
-      location: "TP HCM",
-      price: "38 triệu/m²",
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 4,
-      name: "The Matrix One",
-      location: "Hà Nội",
-      price: "42 triệu/m²",
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-  ];
+  const [activeTab, setActiveTab] = useState("SELL");
+  const [postOutstanding, setPostOutstanding] = useState([]);
+  const [allPost, setAllPost] = useState([]);
+  const [allCategory, setAllCategory] = useState([]);
+  const [locationOptions, setLocationOptions] = useState([]);
+  const [allNews, setALLNews] = useState([]);
+  const [pagi, setPagi] = useState({
+    limit: 4,
+    page: 1,
+    total: 1,
+    totalPages: 1,
+  });
+  const [newsPagi, setNewsPagi] = useState({
+    limit: 4,
+    page: 1,
+    total: 1,
+    totalPages: 1,
+  });
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [priceRange, setPriceRange] = useState(null);
 
-  const featuredListings = [
-    {
-      id: 1,
-      title: "Nhà phố liền kề mặt tiền đường",
-      location: "Quận 7, TP HCM",
-      price: "12.5 tỷ",
-      area: "120m²",
-      bedrooms: 4,
-      bathrooms: 3,
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 2,
-      title: "Căn hộ cao cấp view sông",
-      location: "Quận 2, TP HCM",
-      price: "5.8 tỷ",
-      area: "90m²",
-      bedrooms: 3,
-      bathrooms: 2,
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 3,
-      title: "Biệt thự sân vườn khu compound",
-      location: "Quận Nam Từ Liêm, Hà Nội",
-      price: "25 tỷ",
-      area: "300m²",
-      bedrooms: 5,
-      bathrooms: 5,
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-    {
-      id: 4,
-      title: "Đất nền dự án đã có sổ đỏ",
-      location: "Thủ Đức, TP HCM",
-      price: "3.2 tỷ",
-      area: "80m²",
-      bedrooms: null,
-      bathrooms: null,
-      image:
-        "https://img.iproperty.com.my/angel/610x342-crop/wp-content/uploads/sites/7/2025/04/1-chung-cu-Binh-Duong.jpg",
-    },
-  ];
+  const navigate = useNavigate();
+
+  const fetchData = async (page = 1, limit = 4) => {
+    const filters = {};
+
+    if (selectedCategory) filters.category = selectedCategory;
+    if (selectedLocation && selectedLocation.length > 0) {
+      filters.address = selectedLocation.filter(Boolean)?.join(", ");
+    }
+    if (priceRange) filters.priceRange = priceRange;
+    if (selectedArea) filters.area = selectedArea;
+    const res = await getAllPostAPi({
+      limit,
+      page,
+      filters,
+    });
+
+    if (res.status === 200) {
+      setAllPost(res.data.data);
+      setPagi({
+        limit: res.data.meta.limit,
+        page: res.data.meta.page,
+        total: res.data.meta.total,
+        totalPages: res.data.meta.totalPages,
+      });
+    }
+  };
+  const fetchNewsData = async () => {
+    const res = await getAllNewsApi({
+      limit: newsPagi.limit,
+      page: newsPagi.page,
+    });
+    if (res.status === 200) {
+      setALLNews(res.data.data);
+      setNewsPagi({
+        limit: res.data.meta.limit,
+        page: res.data.meta.page,
+        total: res.data.meta.total,
+        totalPages: res.data.meta.totalPages,
+      });
+    }
+  };
+  useEffect(() => {
+    const fetchPostOutstanding = async () => {
+      const res = await getPostOutstandingAPi();
+      if (res.status === 200) {
+        setPostOutstanding(res.data);
+      }
+    };
+
+    const fetchAllCategory = async () => {
+      const res = await getAllCategoryApi({
+        limit: 100,
+        page: 1,
+      });
+      if (res.status === 200) {
+        setAllCategory(res.data.data);
+      }
+    };
+
+    fetchAllCategory();
+    fetchNewsData();
+    fetchData(pagi.page, pagi.limit);
+    fetchPostOutstanding();
+    fetchCity(setLocationOptions);
+  }, []);
+
+  const handleSearch = () => {
+    // Xây dựng queryString từ các trạng thái lọc
+    const queryParams = new URLSearchParams();
+
+    if (selectedCategory) queryParams.append("category", selectedCategory);
+    if (selectedLocation && selectedLocation.length > 0) {
+      queryParams.append(
+        "address",
+        selectedLocation.filter(Boolean).join(", ")
+      );
+    }
+    if (priceRange) queryParams.append("priceRange", priceRange);
+    if (selectedArea) queryParams.append("area", selectedArea);
+
+    // Điều hướng đến trang tương ứng với tab đang chọn
+    navigate(
+      `/property-list/${activeTab.toUpperCase()}?${queryParams.toString()}`
+    );
+  };
 
   const newsPosts = [
     {
@@ -165,55 +195,36 @@ export default function BatDongSanHomepage() {
                     Nhà đất bán
                   </span>
                 }
-                key="buy"
+                key="SELL"
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-4">
                   <Select
                     placeholder="Loại nhà đất"
                     className="w-full"
                     size="large"
+                    onChange={(value) => setSelectedCategory(value)}
                   >
-                    <Option value="apartment">Căn hộ chung cư</Option>
-                    <Option value="house">Nhà riêng</Option>
-                    <Option value="villa">Biệt thự</Option>
-                    <Option value="land">Đất nền</Option>
+                    {allCategory?.length > 0 &&
+                      allCategory?.map((category) => (
+                        <Option key={category._id} value={category._id}>
+                          {category.name}
+                        </Option>
+                      ))}
                   </Select>
-
-                  <Select
+                  <Cascader
+                    options={locationOptions}
                     placeholder="Tỉnh/Thành phố"
-                    className="w-full"
                     size="large"
-                  >
-                    <Option value="hcm">TP. Hồ Chí Minh</Option>
-                    <Option value="hanoi">Hà Nội</Option>
-                    <Option value="danang">Đà Nẵng</Option>
-                  </Select>
-
-                  <Select
-                    placeholder="Quận/Huyện"
-                    className="w-full"
-                    size="large"
-                    disabled
+                    className="!w-full rounded-lg"
+                    onChange={(value) => setSelectedLocation(value)}
                   />
-
-                  <Select
-                    placeholder="Khoảng giá"
-                    className="w-full"
-                    size="large"
-                  >
-                    <Option value="1">Dưới 1 tỷ</Option>
-                    <Option value="1-3">1 - 3 tỷ</Option>
-                    <Option value="3-5">3 - 5 tỷ</Option>
-                    <Option value="5-10">5 - 10 tỷ</Option>
-                    <Option value="10+">Trên 10 tỷ</Option>
-                  </Select>
-
                   <Select
                     placeholder="Diện tích"
                     className="w-full"
                     size="large"
+                    onChange={(value) => setSelectedArea(value)}
                   >
-                    <Option value="30-">Dưới 30m²</Option>
+                    <Option value="0-30">Dưới 30m²</Option>
                     <Option value="30-50">30 - 50m²</Option>
                     <Option value="50-80">50 - 80m²</Option>
                     <Option value="80-100">80 - 100m²</Option>
@@ -228,6 +239,7 @@ export default function BatDongSanHomepage() {
                     danger
                     icon={<SearchOutlined />}
                     size="large"
+                    onClick={handleSearch}
                   >
                     Tìm kiếm
                   </Button>
@@ -241,54 +253,36 @@ export default function BatDongSanHomepage() {
                     Nhà đất cho thuê
                   </span>
                 }
-                key="rent"
+                key="RENT"
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-4">
                   <Select
                     placeholder="Loại nhà đất"
                     className="w-full"
                     size="large"
+                    onChange={(value) => setSelectedCategory(value)}
                   >
-                    <Option value="apartment">Căn hộ chung cư</Option>
-                    <Option value="house">Nhà riêng</Option>
-                    <Option value="villa">Biệt thự</Option>
-                    <Option value="room">Phòng trọ</Option>
+                    {allCategory?.length > 0 &&
+                      allCategory?.map((category) => (
+                        <Option key={category._id} value={category._id}>
+                          {category.name}
+                        </Option>
+                      ))}
                   </Select>
-
-                  <Select
+                  <Cascader
+                    options={locationOptions}
                     placeholder="Tỉnh/Thành phố"
-                    className="w-full"
                     size="large"
-                  >
-                    <Option value="hcm">TP. Hồ Chí Minh</Option>
-                    <Option value="hanoi">Hà Nội</Option>
-                    <Option value="danang">Đà Nẵng</Option>
-                  </Select>
-
-                  <Select
-                    placeholder="Quận/Huyện"
-                    className="w-full"
-                    size="large"
-                    disabled
+                    className="!w-full rounded-lg"
+                    onChange={(value) => setSelectedLocation(value)}
                   />
-
-                  <Select
-                    placeholder="Khoảng giá"
-                    className="w-full"
-                    size="large"
-                  >
-                    <Option value="5-">Dưới 5 triệu</Option>
-                    <Option value="5-10">5 - 10 triệu</Option>
-                    <Option value="10-20">10 - 20 triệu</Option>
-                    <Option value="20+">Trên 20 triệu</Option>
-                  </Select>
-
                   <Select
                     placeholder="Diện tích"
                     className="w-full"
                     size="large"
+                    onChange={(value) => setSelectedArea(value)}
                   >
-                    <Option value="30-">Dưới 30m²</Option>
+                    <Option value="0-30">Dưới 30m²</Option>
                     <Option value="30-50">30 - 50m²</Option>
                     <Option value="50-80">50 - 80m²</Option>
                     <Option value="80-100">80 - 100m²</Option>
@@ -303,64 +297,7 @@ export default function BatDongSanHomepage() {
                     danger
                     icon={<SearchOutlined />}
                     size="large"
-                  >
-                    Tìm kiếm
-                  </Button>
-                </div>
-              </TabPane>
-
-              <TabPane
-                tab={
-                  <span>
-                    <BankOutlined className="mr-2" />
-                    Dự án
-                  </span>
-                }
-                key="project"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-                  <Select
-                    placeholder="Loại hình dự án"
-                    className="w-full"
-                    size="large"
-                  >
-                    <Option value="apartment">Căn hộ chung cư</Option>
-                    <Option value="house">Nhà phố</Option>
-                    <Option value="villa">Biệt thự</Option>
-                    <Option value="land">Đất nền</Option>
-                  </Select>
-
-                  <Select
-                    placeholder="Tỉnh/Thành phố"
-                    className="w-full"
-                    size="large"
-                  >
-                    <Option value="hcm">TP. Hồ Chí Minh</Option>
-                    <Option value="hanoi">Hà Nội</Option>
-                    <Option value="danang">Đà Nẵng</Option>
-                  </Select>
-
-                  <Select
-                    placeholder="Quận/Huyện"
-                    className="w-full"
-                    size="large"
-                    disabled
-                  />
-
-                  <Input.Search
-                    placeholder="Tên dự án"
-                    allowClear
-                    size="large"
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="flex justify-end mt-4">
-                  <Button
-                    type="primary"
-                    danger
-                    icon={<SearchOutlined />}
-                    size="large"
+                    onClick={handleSearch}
                   >
                     Tìm kiếm
                   </Button>
@@ -381,69 +318,10 @@ export default function BatDongSanHomepage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredListings.map((listing) => (
-              <Card
-                onClick={() =>
-                  navigator(`/property-detail/${listing.title}/${listing.id}`)
-                }
-                key={listing.id}
-                hoverable
-                cover={
-                  <img
-                    alt={listing.title}
-                    src={listing.image}
-                    className="h-48 object-cover"
-                  />
-                }
-                className="overflow-hidden"
-              >
-                <div className="flex flex-col h-48">
-                  <div className="flex justify-between items-start mb-1">
-                    <Tag color="red">{listing.location}</Tag>
-                    <HeartOutlined className="text-lg text-gray-400 hover:text-red-600" />
-                  </div>
-
-                  <h3 className="text-lg font-medium line-clamp-2 mb-2">
-                    {listing.title}
-                  </h3>
-
-                  <div className="flex items-center text-gray-500 mb-2">
-                    <EnvironmentOutlined className="mr-1" />
-                    <span className="text-sm truncate">{listing.location}</span>
-                  </div>
-
-                  <div className="mt-auto">
-                    <div className="flex items-center space-x-4 mb-2">
-                      {listing.bedrooms && (
-                        <div className="flex items-center text-gray-600">
-                          <span className="font-medium mr-1">
-                            {listing.bedrooms}
-                          </span>
-                          <span>PN</span>
-                        </div>
-                      )}
-
-                      {listing.bathrooms && (
-                        <div className="flex items-center text-gray-600">
-                          <span className="font-medium mr-1">
-                            {listing.bathrooms}
-                          </span>
-                          <span>WC</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center text-gray-600">
-                        <span className="font-medium mr-1">{listing.area}</span>
-                      </div>
-                    </div>
-
-                    <div className="text-red-600 font-bold text-lg">
-                      {listing.price}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
+            {postOutstanding?.length > 0 &&
+              postOutstanding?.map((listing) => (
+                <PostCard listing={listing} key={listing._id} />
+              ))}
           </div>
         </div>
       </section>
@@ -451,90 +329,92 @@ export default function BatDongSanHomepage() {
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Dự án nổi bật</h2>
+            <h2 className="text-2xl font-bold">Bất động sản dành cho bạn</h2>
             <Button type="link" className="text-red-600 flex items-center">
               Xem tất cả <ArrowRightOutlined className="ml-1" />
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProjects.map((project) => (
-              <Card
-                onClick={() =>
-                  navigator(`/property-detail/${project.name}/${project.id}`)
-                }
-                key={project.id}
-                hoverable
-                cover={
-                  <img
-                    alt={project.name}
-                    src={project.image}
-                    className="h-48 object-cover"
-                  />
-                }
-                className="overflow-hidden"
-              >
-                <div className="flex flex-col h-36">
-                  <h3 className="text-lg font-medium mb-2">{project.name}</h3>
-
-                  <div className="flex items-center text-gray-500 mb-2">
-                    <EnvironmentOutlined className="mr-1" />
-                    <span>{project.location}</span>
-                  </div>
-
-                  <div className="mt-auto">
-                    <div className="flex items-center">
-                      <StarOutlined className="text-yellow-500 mr-1" />
-                      <StarOutlined className="text-yellow-500 mr-1" />
-                      <StarOutlined className="text-yellow-500 mr-1" />
-                      <StarOutlined className="text-yellow-500 mr-1" />
-                      <StarOutlined className="text-gray-300 mr-1" />
-                      <span className="text-gray-500 text-sm">
-                        (24 đánh giá)
-                      </span>
-                    </div>
-
-                    <div className="text-red-600 font-bold text-lg mt-2">
-                      {project.price}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
+            {postOutstanding &&
+              postOutstanding?.length > 0 &&
+              postOutstanding?.map((listing) => (
+                <PostCard listing={listing} key={listing._id} />
+              ))}
           </div>
         </div>
       </section>
-
-      <section className="py-12 bg-gray-50">
+      <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Tin tức bất động sản</h2>
+            <h2 className="text-2xl font-bold">Danh sách bất động sản</h2>
             <Button type="link" className="text-red-600 flex items-center">
               Xem tất cả <ArrowRightOutlined className="ml-1" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {newsPosts.map((post) => (
-              <div key={post.id} className="flex space-x-4">
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-32 h-20 object-cover rounded"
-                />
-                <div className="flex flex-col">
-                  <h3 className="font-medium line-clamp-2 mb-1">
-                    {post.title}
-                  </h3>
-                  <div className="flex items-center text-gray-500 text-sm mt-auto">
-                    <Tag color="blue" className="mr-2">
-                      {post.category}
-                    </Tag>
-                    <span>{post.date}</span>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {allPost.length > 0 &&
+                allPost?.map((listing) => (
+                  <PostCard listing={listing} key={listing._id} />
+                ))}
+            </div>
+            <div className="flex justify-center w-full mt-4">
+              <Pagination
+                current={pagi.page}
+                total={pagi.total}
+                pageSize={pagi.limit}
+                onChange={(page) => fetchData(page, pagi.limit)}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Tin tức bất động sản</h2>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {allNews?.map((news) => (
+                <div
+                  onClick={() => navigate(`/news/${news._id}`)}
+                  key={news._id}
+                  className="flex space-x-4 shadow-md cursor-pointer p-4 rounded-md"
+                >
+                  <img
+                    src={BASEIMAGE + news.thumb}
+                    alt={news.title}
+                    className="w-32 h-20 object-cover rounded"
+                  />
+                  <div className="flex flex-col">
+                    <h3 className="font-medium line-clamp-2 mb-1">
+                      {news.title}
+                    </h3>
+                    <div className="flex items-center text-gray-500 text-sm mt-auto">
+                      {news?.tags?.length &&
+                        news.tags?.map((item) => (
+                          <Tag color="blue" className="mr-2" key={item}>
+                            {item}
+                          </Tag>
+                        ))}
+                      <span>{news.date}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="flex justify-center w-full mt-4">
+              <Pagination
+                current={newsPagi.page}
+                total={newsPagi.total}
+                pageSize={newsPagi.limit}
+                onChange={(page) => fetchNewsData(page, newsPagi.limit)}
+              />
+            </div>
           </div>
         </div>
       </section>

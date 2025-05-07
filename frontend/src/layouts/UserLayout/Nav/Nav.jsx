@@ -29,7 +29,13 @@ const Nav = () => {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1 cursor-pointer" onClick={logout}>
+      <div
+        className="flex items-center gap-1 cursor-pointer"
+        onClick={() => {
+          logout();
+          navigator("/");
+        }}
+      >
         <LogoutOutlined />
         <p className="font-bold">Đăng xuất</p>
       </div>

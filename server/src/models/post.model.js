@@ -13,10 +13,23 @@ const postSchema = new Schema(
       minLength: [3, "Name must be at least 3 characters."],
       maxLength: [200, "Name is too large"],
     },
-    img: {
+    description: {
       type: String,
-      required: true,
     },
+    overview: {
+      type: String,
+    },
+    type: {
+      type: String,
+      enum: ["RENT", "SELL"],
+      default: "RENT",
+    },
+    images: [
+      {
+        filename: { type: String, required: true },
+        path: { type: String, required: true },
+      },
+    ],
     price: {
       type: Number,
       required: true,
@@ -25,6 +38,13 @@ const postSchema = new Schema(
     description: {
       type: String,
       required: true,
+    },
+    address: {
+      type: String,
+      require: true,
+    },
+    acreage: {
+      type: Number,
     },
     category: {
       type: Schema.Types.ObjectId,
@@ -38,6 +58,16 @@ const postSchema = new Schema(
       },
       default: "in-stock",
     },
+    author: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    verification: {
+      type: Boolean,
+      default: false,
+    },
+    views: { type: Number, default: 0 },
+    favorites: { type: Number, default: 0 },
     reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
     isDelete: {
       type: String,
@@ -48,5 +78,5 @@ const postSchema = new Schema(
   { timestamps: true, collection: COLLECTION_NAME }
 );
 module.exports = {
-  Product: model(DOCUMENT_NAME, postSchema),
+  Post: model(DOCUMENT_NAME, postSchema),
 };
