@@ -36,5 +36,20 @@ class UserController {
       data: await UserService.updateUser(userId, req.body),
     }).send(res);
   };
+  userSavePost = async (req, res, next) => {
+    const { postId } = req.params;
+    new SuccessResponse({
+      data: await UserService.userSavePost(req.user.userId, postId),
+    }).send(res);
+  };
+  userGetAllFavoriteList = async (req, res, next) => {
+    new SuccessResponse({
+      data: await UserService.userGetAllFavoriteList({
+        userId: req.user.userId,
+        limit: 10,
+        page: 1,
+      }),
+    }).send(res);
+  };
 }
 module.exports = new UserController();

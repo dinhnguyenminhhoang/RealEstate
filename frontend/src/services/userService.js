@@ -24,6 +24,12 @@ const createNewUserApi = (formData) => {
 const adminUpdateUserApi = (userId, formData) => {
   return instance.put(`/user/${userId}`, formData);
 };
+const savePostApi = (postId) => {
+  return instance.put(`/user/save-post/${postId}`);
+};
+const userGetAllFavoriteList = () => {
+  return instance.get(`/user/favorite-post`);
+};
 export {
   getUserProfileAPi,
   updateUserProfileApi,
@@ -31,4 +37,6 @@ export {
   deleteUserApi,
   createNewUserApi,
   adminUpdateUserApi,
+  savePostApi,
+  userGetAllFavoriteList,
 };

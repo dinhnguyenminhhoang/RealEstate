@@ -23,6 +23,7 @@ import ManageCategory from "./pages/Admin/ManageCategory/ManageCategory";
 import ManagePost from "./pages/Admin/ManagePost/ManagePost";
 import ManageNews from "./pages/Admin/ManageNews/ManageNews";
 import NewsDetails from "./pages/NewsDetail/NewsDetails";
+import FavoriteList from "./pages/User/FavoriteList/FavoriteList";
 
 const App = () => {
   const router = createBrowserRouter(
@@ -41,6 +42,7 @@ const App = () => {
           />
           <Route path="/property-list/:type" element={<PropertyListing />} />
           <Route path="/news/:id" element={<NewsDetails />} />
+          <Route path="/favorite-list" element={<FavoriteList />} />
         </Route>
         <Route element={<UserLayout />}>
           <Route path="/profile" element={<Profile />} />

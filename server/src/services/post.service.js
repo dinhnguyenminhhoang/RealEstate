@@ -2,6 +2,7 @@
 
 const { NotFoundError, AuthFailureError } = require("../core/error.response");
 const { Post } = require("../models/post.model");
+const { User } = require("../models/user.model");
 const { unGetSelectData, removeUndefinedObject } = require("../utils");
 
 const { paginate } = require("../utils/paginate");
@@ -57,7 +58,7 @@ class PostService {
       filters,
       options,
       projection: unGetSelectData(["isDelete", "__v"]),
-      // populate: ["author"],
+      populate: ["category"],
     });
 
     return posts;
@@ -133,12 +134,11 @@ class PostService {
 
     return posts;
   };
-  static getPostDetail = async ({ id }) => {
+  static getPostDetail = async ({ id, userId }) => {
     const filters = {
       _id: id,
       isDelete: "active",
     };
-
     const post = await Post.findOne(filters)
       .populate([
         {
@@ -156,7 +156,20 @@ class PostService {
       throw new NotFoundError("Post not found or has been deleted");
     }
 
-    return post;
+    const postObject = post.toObject();
+
+    if (userId) {
+      const user = await User.findOne({
+        _id: userId,
+        favorites: { $in: [id] },
+      });
+
+      postObject.isFavorite = !!user;
+    } else {
+      postObject.isFavorite = false;
+    }
+
+    return postObject;
   };
   static getPostOutstanding = async ({ limit = 8 } = {}) => {
     const posts = await Post.find({ isDelete: "active" })

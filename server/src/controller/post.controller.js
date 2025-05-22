@@ -31,8 +31,12 @@ class PostController {
   };
   getPostDetail = async (req, res, next) => {
     const { id } = req.params;
+    const { userId } = req.query;
     new SuccessResponse({
-      data: await PostService.getPostDetail({ id }),
+      data: await PostService.getPostDetail({
+        id,
+        userId,
+      }),
     }).send(res);
   };
   getPostOutstanding = async (req, res, next) => {
@@ -60,7 +64,6 @@ class PostController {
   };
   updatePostView = async (req, res, next) => {
     const { id } = req.params;
-    console.log("id", id);
     new SuccessResponse({
       data: await PostService.updatePostView(id),
     }).send(res);

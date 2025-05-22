@@ -26,6 +26,7 @@ const Nav = () => {
     <Menu onClick={handleMenuClick}>
       <Menu.Item key="user/dashboard">Trang cá nhân</Menu.Item>
       <Menu.Item key="user/manage-post">Quản lí đăng tin</Menu.Item>
+      <Menu.Item key="admin/dashboard">Quản lí admin</Menu.Item>
       <Menu.Item key="logout">Đăng xuất</Menu.Item>
     </Menu>
   );
@@ -61,13 +62,13 @@ const Nav = () => {
 
           {/* User Navigation */}
           <div className="flex items-center space-x-4">
-            <a
-              href="#"
+            <Link
+              to="/favorite-list"
               className="hidden md:flex items-center space-x-1 text-gray-700 hover:text-red-600"
             >
               <HeartOutlined />
               <span>Yêu thích</span>
-            </a>
+            </Link>
 
             {isAuthenticated ? (
               <Dropdown overlay={userMenu}>

@@ -34,5 +34,15 @@ router.put(
   adminAuthentication,
   asynchandler(userController.updateUser)
 );
+router.put(
+  "/user/save-post/:postId",
+  authentication,
+  asynchandler(userController.userSavePost)
+);
+router.get(
+  "/user/favorite-post",
+  authentication,
+  asynchandler(userController.userGetAllFavoriteList)
+);
 
 module.exports = router;

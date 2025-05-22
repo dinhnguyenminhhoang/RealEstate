@@ -6,6 +6,7 @@ import {
   DollarOutlined,
   EnvironmentOutlined,
   EyeOutlined,
+  HeartFilled,
   HeartOutlined,
   HomeOutlined,
   MessageOutlined,
@@ -25,6 +26,7 @@ import {
   Form,
   Input,
   List,
+  message,
   Row,
   Tabs,
   Tooltip,
@@ -38,6 +40,7 @@ import {
   updateViewApi,
 } from "../../services/postService";
 import { BASEIMAGE, formatMoneyVND } from "../../utils";
+import { savePostApi } from "../../services/userService";
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -51,43 +54,42 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
   const navigator = useNavigate();
+  const getSimilarData = async (categoryId) => {
+    try {
+      const res = await getAllPostAPi({
+        limit: 3,
+        page: 1,
+        filters: { category: categoryId },
+      });
+      if (res.status === 200) {
+        setSimilarProperty(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching property:", error);
+    }
+  };
+  const incView = async (id) => {
+    try {
+      await updateViewApi(id);
+    } catch (error) {
+      console.error("Error fetching property details:", error);
+    }
+  };
+  const fetchData = async () => {
+    try {
+      const res = await getPostDetailAPi(id);
+      if (res.status === 200) {
+        setProperty(res.data);
+        await incView(res.data._id);
+        await getSimilarData(res.data.category._id);
+      }
+    } catch (error) {
+      console.error("Error fetching property details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const getSimilarData = async (categoryId) => {
-      try {
-        const res = await getAllPostAPi({
-          limit: 3,
-          page: 1,
-          filters: { category: categoryId },
-        });
-        if (res.status === 200) {
-          setSimilarProperty(res.data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching property:", error);
-      }
-    };
-    const incView = async (id) => {
-      try {
-        await updateViewApi(id);
-      } catch (error) {
-        console.error("Error fetching property details:", error);
-      }
-    };
-    const fetchData = async () => {
-      try {
-        const res = await getPostDetailAPi(id);
-        if (res.status === 200) {
-          setProperty(res.data);
-          await incView(res.data._id);
-          await getSimilarData(res.data.category._id);
-        }
-      } catch (error) {
-        console.error("Error fetching property details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [id]);
 
@@ -121,7 +123,7 @@ export default function PropertyDetailPage() {
         property.author?.avatar ||
         "https://randomuser.me/api/portraits/men/1.jpg",
       phone: property.author?.phone || "0337 xxx xxx",
-      fullPhone: property.author?.phone || "0337 972 340",
+      fullPhone: property.author?.phone || "0337 972 123",
       memberSince: new Date(
         property.author?.createdAt || property.createdAt
       ).getFullYear(),
@@ -129,7 +131,17 @@ export default function PropertyDetailPage() {
       listings: 10,
     },
   };
-
+  const handleSavePost = async () => {
+    try {
+      const res = await savePostApi(id);
+      if (res.status === 200) {
+        fetchData();
+        message("Lưu bài đăng thành công");
+      } else {
+        message("Lưu bài đăng thất bại");
+      }
+    } catch (error) {}
+  };
   return (
     <div className="bg-gray-100 py-6">
       <div className="container mx-auto px-4">
@@ -222,7 +234,19 @@ export default function PropertyDetailPage() {
                     xem
                   </div>
                   <div className="flex space-x-2">
-                    <Button icon={<HeartOutlined />}>Lưu tin</Button>
+                    {!property?.isFavorite ? (
+                      <Button icon={<HeartOutlined />} onClick={handleSavePost}>
+                        Lưu tin
+                      </Button>
+                    ) : (
+                      <Button
+                        className="!border-red-500 !text-red-500 !cursor-not-allowed"
+                        icon={<HeartFilled className="!text-red-600" />}
+                      >
+                        Đã lưu
+                      </Button>
+                    )}
+
                     <Button icon={<ShareAltOutlined />}>Chia sẻ</Button>
                   </div>
                 </div>

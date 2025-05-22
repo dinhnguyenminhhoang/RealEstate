@@ -24,7 +24,8 @@ const SignIn = () => {
       signInSchema.parse(values);
       const success = await handleSignIn(values);
       if (success && success.includes("ADMIN")) {
-        navigator("/admin/dashboard");
+        localStorage.setItem("role", "ADMIN");
+        navigator("/");
       } else if (success) {
         navigator("/");
       }

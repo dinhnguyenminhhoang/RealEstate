@@ -1,4 +1,5 @@
 import instance from "../config/instance";
+import Cookie from "js-cookie";
 
 const userCreatePostAPi = (formData) => {
   return instance.post("/user-post", formData);
@@ -12,7 +13,6 @@ const getAllPostAPi = ({ page = 1, limit = 6, filters = {} }) => {
     limit,
     ...filters,
   }).toString();
-  console.log("filters", filters);
   return instance.get(`/post?${queryParams}`);
 };
 const updateViewApi = (id) => {
@@ -37,7 +37,15 @@ const getPostOutstandingAPi = () => {
   return instance.get("/post-outstanding");
 };
 const getPostDetailAPi = (id) => {
-  return instance.get(`/post/${id}`);
+  const userId = Cookie.get("userId");
+  if (userId) {
+    const queryParams = new URLSearchParams({
+      userId,
+    }).toString();
+    return instance.get(`/post/${id}?${queryParams}`);
+  } else {
+    return instance.get(`/post/${id}`);
+  }
 };
 export {
   userCreatePostAPi,

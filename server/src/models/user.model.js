@@ -45,6 +45,7 @@ const userSchema = new Schema(
       default: ["USER"],
     },
     reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    favorites: [{ type: Schema.Types.ObjectId, ref: "Post" }],
     invoiceInformation: {
       invoiceName: String,
       invoiceEmail: String,
