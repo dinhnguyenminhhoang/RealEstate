@@ -6,7 +6,7 @@ const ReportService = require("../services/report.service");
 class ReportController {
   createNewReport = async (req, res, next) => {
     new CREATED({
-      data: await ReportService.createNewReport(req.body),
+      data: await ReportService.createNewReport(req.body, req.user),
     }).send(res);
   };
   getAllReport = async (req, res, next) => {
@@ -15,10 +15,10 @@ class ReportController {
       data: await ReportService.getAllReport(query),
     }).send(res);
   };
-  replyReport = async (req, res, next) => {
+  updateStatusReport = async (req, res, next) => {
     const { reportId } = req.params;
     new SuccessResponse({
-      data: await ReportService.replyReport(reportId, req.body),
+      data: await ReportService.updateStatusReport(reportId, req.body),
     }).send(res);
   };
 }

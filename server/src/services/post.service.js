@@ -240,6 +240,22 @@ class PostService {
     );
     return result;
   };
+  static unPublishPost = async (id) => {
+    const isExist = await Post.findOne({ _id: id });
+
+    if (!isExist) {
+      throw new NotFoundError("Post not found!");
+    }
+
+    const result = await Post.findOneAndUpdate(
+      { _id: id },
+      { verification: false },
+      {
+        new: true,
+      }
+    );
+    return result;
+  };
   static userDeleteYourPost = async (user, id) => {
     const isExist = await Post.findOne({ _id: id, author: user.userId });
 

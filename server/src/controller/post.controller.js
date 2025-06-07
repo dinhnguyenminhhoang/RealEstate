@@ -50,6 +50,12 @@ class PostController {
       data: await PostService.confirmPost(id),
     }).send(res);
   };
+  unPublishPost = async (req, res, next) => {
+    const { id } = req.params;
+    new SuccessResponse({
+      data: await PostService.unPublishPost(id),
+    }).send(res);
+  };
   userGetYourPost = async (req, res, next) => {
     const { id } = req.params;
     new SuccessResponse({

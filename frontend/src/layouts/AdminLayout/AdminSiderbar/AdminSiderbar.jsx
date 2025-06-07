@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import { MdCategory, MdNewspaper } from "react-icons/md";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { FileWarning } from "lucide-react";
 
 const { Sider } = Layout;
 
@@ -51,6 +52,11 @@ const AdminSidebar = () => {
       icon: <MdNewspaper className="text-lg" />,
       label: <Link to="/admin/news">Quản lý tin tức</Link>,
     },
+    {
+      key: "/admin/reports",
+      icon: <FileWarning className="text-lg" />,
+      label: <Link to="/admin/reports">Quản lí report</Link>,
+    },
   ];
 
   return (
@@ -63,12 +69,15 @@ const AdminSidebar = () => {
         background: "white",
         boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
         height: "100vh",
-        position: "sticky",
+        position: "fixed",
         top: 0,
         left: 0,
       }}
     >
-      <div className="flex items-center justify-center py-5">
+      <div
+        className="flex items-center justify-center py-5 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
         {!collapsed ? (
           <h2 className="text-xl font-bold text-blue-600">Quản trị viên</h2>
         ) : (
@@ -86,7 +95,7 @@ const AdminSidebar = () => {
         items={menuItems}
       />
 
-      <div className="absolute bottom-4 w-full px-4">
+      <div className="absolute bottom-20 w-full px-4">
         <Button
           type="primary"
           danger

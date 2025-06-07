@@ -30,6 +30,9 @@ const userDeletePostApi = (id) => {
 const confirmPostApi = (id) => {
   return instance.put(`/confirm-post/${id}`);
 };
+const unPublishPostApi = (id) => {
+  return instance.put(`/unPublish-post/${id}`);
+};
 const deletePostApi = (id) => {
   return instance.delete(`/post/${id}`);
 };
@@ -59,4 +62,5 @@ export {
   getPostOutstandingAPi,
   getPostDetailAPi,
   updateViewApi,
+  unPublishPostApi,
 };

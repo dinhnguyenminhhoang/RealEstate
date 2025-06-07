@@ -41,6 +41,8 @@ import {
 } from "../../services/postService";
 import { BASEIMAGE, formatMoneyVND } from "../../utils";
 import { savePostApi } from "../../services/userService";
+import { FileWarning } from "lucide-react";
+import { ReportPostDialog } from "../../components/ReportPostDialog/ReportPostDialog";
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -50,6 +52,7 @@ export default function PropertyDetailPage() {
   const [activeTab, setActiveTab] = useState("1");
   const [showPhone, setShowPhone] = useState(false);
   const [property, setProperty] = useState(null);
+  const [dialogVisible, setDialogVisible] = useState(false);
   const [similarProperty, setSimilarProperty] = useState([]);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
@@ -248,6 +251,13 @@ export default function PropertyDetailPage() {
                     )}
 
                     <Button icon={<ShareAltOutlined />}>Chia sẻ</Button>
+                    <Button
+                      onClick={() => setDialogVisible(true)}
+                      icon={<FileWarning />}
+                      className="!text-red-500 !border-red-500"
+                    >
+                      Báo cáo
+                    </Button>
                   </div>
                 </div>
 
@@ -455,6 +465,14 @@ export default function PropertyDetailPage() {
           </Col>
         </Row>
       </div>
+      {dialogVisible ? (
+        <ReportPostDialog
+          onClose={() => setDialogVisible(false)}
+          postId={id}
+          postTitle={property?.title || ""}
+          visible={dialogVisible}
+        />
+      ) : null}
     </div>
   );
 }

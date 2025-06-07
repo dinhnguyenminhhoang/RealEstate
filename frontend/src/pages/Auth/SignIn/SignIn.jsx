@@ -27,6 +27,7 @@ const SignIn = () => {
         localStorage.setItem("role", "ADMIN");
         navigator("/");
       } else if (success) {
+        localStorage.removeItem("role");
         navigator("/");
       }
     } catch (error) {

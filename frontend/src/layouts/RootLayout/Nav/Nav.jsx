@@ -21,12 +21,14 @@ const Nav = () => {
       navigate(`/${key}`);
     }
   };
-
+  const isAdmin = localStorage.getItem("role");
   const userMenu = (
     <Menu onClick={handleMenuClick}>
       <Menu.Item key="user/dashboard">Trang cá nhân</Menu.Item>
       <Menu.Item key="user/manage-post">Quản lí đăng tin</Menu.Item>
-      <Menu.Item key="admin/dashboard">Quản lí admin</Menu.Item>
+      {isAdmin === "ADMIN" && (
+        <Menu.Item key="admin/dashboard">Quản lí admin</Menu.Item>
+      )}
       <Menu.Item key="logout">Đăng xuất</Menu.Item>
     </Menu>
   );

@@ -39,6 +39,11 @@ router.put(
   adminAuthentication,
   asynchandler(postController.confirmPost)
 );
+router.put(
+  "/unPublish-post/:id",
+  adminAuthentication,
+  asynchandler(postController.unPublishPost)
+);
 router.delete(
   "/post/:id",
   adminAuthentication,

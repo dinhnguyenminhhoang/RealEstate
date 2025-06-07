@@ -10,14 +10,15 @@ router.post(
   authentication,
   asynchandler(reportController.createNewReport)
 );
+
+router.put(
+  "/report/status/:reportId",
+  authentication,
+  asynchandler(reportController.updateStatusReport)
+);
 router.get(
   "/report",
   adminAuthentication,
   asynchandler(reportController.getAllReport)
-);
-router.put(
-  "/report/:reportId",
-  adminAuthentication,
-  asynchandler(reportController.replyReport)
 );
 module.exports = router;

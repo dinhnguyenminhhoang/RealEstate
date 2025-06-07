@@ -4,7 +4,7 @@ import {
   PlusOutlined,
   SolutionOutlined,
 } from "@ant-design/icons";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const menuItems = [
   { label: "Tổng quan", icon: <DashboardOutlined />, path: "/user/dashboard" },
@@ -15,7 +15,8 @@ const menuItems = [
 
 const Sidebar = () => {
   const location = useLocation();
-  
+  const navigator = useNavigate();
+
   return (
     <aside className="w-[90px] h-screen bg-white shadow-md flex flex-col items-center py-4 fixed">
       <img
@@ -23,7 +24,8 @@ const Sidebar = () => {
           "https://cdn-assets-seller.batdongsan.com.vn/seller-staticfile/logo-full.svg"
         }
         alt="Logo"
-        className="w-8 h-8 mb-6"
+        className="w-8 h-8 mb-6 cursor-pointer"
+        onClick={() => navigator("/")}
       />
       <nav className="flex flex-col space-y-6">
         {menuItems.map((item) => {

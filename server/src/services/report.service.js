@@ -3,34 +3,20 @@
 const { NotFoundError } = require("../core/error.response");
 const sendEmail = require("../helpers/sendEmail");
 const { Report } = require("../models/report.model");
-const {
-  replyReportEmailForm,
-  receiveReportEmailForm,
-} = require("../utils/emailExtension");
+const { replyReportEmailForm } = require("../utils/emailExtension");
 const { paginate } = require("../utils/paginate");
 
 class ReportService {
-  static createNewReport = async (data) => {
-    const { name, email, title, content, phone } = data;
-    const reecentReportEmail = receiveReportEmailForm(
-      name,
-      phone,
-      title,
-      content
-    );
-    console.log("process.env.YOUREMAIL",process.env.YOUREMAIL)
-    console.log("run....")
-    await sendEmail(
-      process.env.YOUREMAIL,
-      reecentReportEmail.title,
-      reecentReportEmail.body
-    );
+  static createNewReport = async (data, user) => {
+    const { post, reason, content } = data;
+    if (!user) throw new NotFoundError("User not found");
+    if (!post) throw new NotFoundError("Post not found");
     return await Report.create({
       content: content,
-      name: name,
-      title: title,
-      email: email,
-      phone: phone,
+      post: post,
+      reason: reason,
+      content: content,
+      author: user.userId,
     });
   };
   static getAllReport = async ({
@@ -53,27 +39,18 @@ class ReportService {
       page: +page,
       filters,
       options,
+      populate: ["author", "post"],
     });
     return reports;
   };
-  static replyReport = async (reportId, data) => {
-    const foundReport = await Report.findById(reportId);
-    if (!foundReport) throw new NotFoundError("Report not found");
-    const replyReportEmail = replyReportEmailForm(
-      foundReport.name,
-      data.title,
-      data.content
-    );
-    await sendEmail(
-      foundReport.email,
-      replyReportEmail.title,
-      replyReportEmail.body
-    );
-    return await Report.findOneAndUpdate(
-      { _id: reportId },
-      { reply: data },
-      { new: true }
-    ).lean();
+  static updateStatusReport = async (reportId, data) => {
+    const { status } = data;
+    if (!status) throw new NotFoundError("Status not found");
+    const report = await Report.findById(reportId);
+    if (!report) throw new NotFoundError("Report not found");
+    report.status = status;
+    await report.save();
+    return report;
   };
 }
 module.exports = ReportService;

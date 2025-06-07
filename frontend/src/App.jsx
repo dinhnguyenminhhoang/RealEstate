@@ -24,6 +24,8 @@ import ManagePost from "./pages/Admin/ManagePost/ManagePost";
 import ManageNews from "./pages/Admin/ManageNews/ManageNews";
 import NewsDetails from "./pages/NewsDetail/NewsDetails";
 import FavoriteList from "./pages/User/FavoriteList/FavoriteList";
+import ManagerReport from "./pages/Admin/ManagerReport/ManagerReport";
+import AdminDashboard from "./pages/Admin/AdminDashboard/AdminDashboard";
 
 const App = () => {
   const router = createBrowserRouter(
@@ -51,11 +53,12 @@ const App = () => {
           <Route path="/user/manage-post" element={<UserManagePost />} />
         </Route>
         <Route element={<AdminLayout />}>
-          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<ManagerUser />} />
           <Route path="/admin/categories" element={<ManageCategory />} />
           <Route path="/admin/posts" element={<ManagePost />} />
           <Route path="/admin/news" element={<ManageNews />} />
+          <Route path="/admin/reports" element={<ManagerReport />} />
         </Route>
       </Route>
     )

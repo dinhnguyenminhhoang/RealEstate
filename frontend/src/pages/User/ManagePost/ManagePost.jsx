@@ -219,12 +219,15 @@ const UserManagePost = () => {
       width: 120,
       render: (_, record) => (
         <Space size="middle">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record._id)}
-            className="text-blue-500 hover:text-blue-700"
-          />
+          {record.verification ? null : (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record._id)}
+              className="text-blue-500 hover:text-blue-700"
+            />
+          )}
+
           <Popconfirm
             title="Bạn có chắc chắn muốn xóa?"
             onConfirm={() => handleDelete(record._id)}

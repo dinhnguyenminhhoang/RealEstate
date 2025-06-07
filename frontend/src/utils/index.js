@@ -116,11 +116,9 @@ export function formatMoneyVND(amount) {
 export const stripHtmlAndLimitLength = (htmlContent, maxLength = 100) => {
   if (!htmlContent) return "";
 
-  // Tạo một element tạm để parse HTML
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = htmlContent;
 
-  // Lấy text content và giới hạn độ dài
   let textContent = tempDiv.textContent || tempDiv.innerText || "";
   if (textContent.length > maxLength) {
     textContent = textContent.substring(0, maxLength) + "...";

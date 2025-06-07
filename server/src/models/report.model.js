@@ -6,19 +6,13 @@ const COLLECTION_NAME = "Reports";
 
 const reportSchema = new Schema(
   {
-    name: {
-      type: String,
-      trim: true,
-    },
-    email: {
-      type: String,
-      trim: true,
-    },
+    author: { type: Schema.Types.ObjectId, ref: "User" },
+    post: { type: Schema.Types.ObjectId, ref: "Post" },
     phone: {
       type: String,
       trim: true,
     },
-    title: {
+    reason: {
       type: String,
       trim: true,
     },
@@ -26,15 +20,10 @@ const reportSchema = new Schema(
       type: String,
       trim: true,
     },
-    reply: {
-      title: {
-        type: String,
-        trim: true,
-      },
-      content: {
-        type: String,
-        trim: true,
-      },
+    status: {
+      type: String,
+      enum: ["pending", "resolved", "rejected"],
+      default: "pending",
     },
   },
   { timestamps: true, collection: COLLECTION_NAME }
