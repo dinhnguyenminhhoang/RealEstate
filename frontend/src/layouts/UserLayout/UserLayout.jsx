@@ -1,8 +1,7 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar/Sidebar";
 import Footer from "../RootLayout/Footer/Footer";
 import Nav from "./Nav/Nav";
+import Sidebar from "./Sidebar/Sidebar";
 
 const UserLayout = () => {
   return (

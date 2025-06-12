@@ -43,6 +43,7 @@ import { BASEIMAGE, formatMoneyVND } from "../../utils";
 import { savePostApi } from "../../services/userService";
 import { FileWarning } from "lucide-react";
 import { ReportPostDialog } from "../../components/ReportPostDialog/ReportPostDialog";
+import { createApplicationApi } from "../../services/applicationService";
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -56,6 +57,7 @@ export default function PropertyDetailPage() {
   const [similarProperty, setSimilarProperty] = useState([]);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
+  const [form] = Form.useForm();
   const navigator = useNavigate();
   const getSimilarData = async (categoryId) => {
     try {
@@ -143,12 +145,27 @@ export default function PropertyDetailPage() {
       } else {
         message("Lưu bài đăng thất bại");
       }
-    } catch (error) {}
+    } catch (error) {
+      message.error("Gửi yêu cầu thất bại!");
+    }
+  };
+  const onFinish = async (values) => {
+    try {
+      const response = await createApplicationApi({
+        ...values,
+        post: id,
+      });
+      if (response) {
+        message.success("Yêu cầu của bạn đã được gửi thành công!");
+      }
+      form.resetFields();
+    } catch (error) {
+      message.error("Gửi yêu cầu thất bại!");
+    }
   };
   return (
     <div className="bg-gray-100 py-6">
       <div className="container mx-auto px-4">
-        {/* Breadcrumb */}
         <Breadcrumb className="mb-4">
           <Breadcrumb.Item href="/">
             <HomeOutlined /> Trang chủ
@@ -185,7 +202,6 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              {/* Title and Basic Info */}
               <div className="p-6">
                 <div className="mb-4">
                   <Title level={2} className="mb-3">
@@ -228,7 +244,6 @@ export default function PropertyDetailPage() {
 
                 <Divider className="my-4" />
 
-                {/* Property ID and Actions */}
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-gray-500">
                     Mã tin: <span className="font-medium">{property._id}</span>{" "}
@@ -260,8 +275,6 @@ export default function PropertyDetailPage() {
                     </Button>
                   </div>
                 </div>
-
-                {/* Tabs */}
                 <Tabs
                   activeKey={activeTab}
                   onChange={setActiveTab}
@@ -419,24 +432,53 @@ export default function PropertyDetailPage() {
 
               <Divider className="my-4" />
 
-              <Form layout="vertical">
-                <Form.Item label="Họ tên">
+              <Form form={form} layout="vertical" onFinish={onFinish}>
+                <Form.Item
+                  name="fullName"
+                  label="Họ tên"
+                  rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
+                >
                   <Input placeholder="Nhập họ tên của bạn" />
                 </Form.Item>
-                <Form.Item label="Số điện thoại">
+                <Form.Item
+                  name="phone"
+                  label="Số điện thoại"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập số điện thoại!" },
+                  ]}
+                >
                   <Input placeholder="Nhập số điện thoại của bạn" />
                 </Form.Item>
-                <Form.Item label="Email">
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập email!" },
+                    { type: "email", message: "Email không hợp lệ!" },
+                  ]}
+                >
                   <Input placeholder="Nhập email của bạn" />
                 </Form.Item>
-                <Form.Item label="Nội dung">
+                <Form.Item
+                  name="content"
+                  label="Nội dung"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập nội dung!" },
+                  ]}
+                >
                   <TextArea
                     rows={4}
                     placeholder="Tôi quan tâm đến bất động sản này, vui lòng liên hệ với tôi"
                   />
                 </Form.Item>
                 <Form.Item>
-                  <Button type="primary" danger block size="large">
+                  <Button
+                    type="primary"
+                    danger
+                    block
+                    size="large"
+                    htmlType="submit"
+                  >
                     Gửi yêu cầu
                   </Button>
                 </Form.Item>

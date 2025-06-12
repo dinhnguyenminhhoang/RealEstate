@@ -1,7 +1,12 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Modal, Pagination, Space, Spin, Table } from "antd";
 import React, { useEffect, useState } from "react";
-import { deleteUserApi, getAllUserApi } from "../../../services/userService";
+import {
+  adminUpdateUserApi,
+  createNewUserApi,
+  deleteUserApi,
+  getAllUserApi,
+} from "../../../services/userService";
 import UserForm from "../../../components/FormManage/UserForm/UserForm";
 import useNotification from "../../../hooks/useNotification";
 
@@ -151,9 +156,9 @@ const ManagerUser = () => {
     try {
       let res;
       if (editUser) {
-        res = await adminUpdateUser(editUser._id, values);
+        res = await adminUpdateUserApi(editUser._id, values);
       } else {
-        res = await createNewUser(values);
+        res = await createNewUserApi({ ...values, address: "chua cap nhat" });
       }
       if (res.status === 201) {
         setIsShowModal(false);

@@ -60,7 +60,14 @@ class UserService {
       }
     ).lean();
   };
-  static createUser = async ({ userName, email, phone, password, roles }) => {
+  static createUser = async ({
+    userName,
+    email,
+    phone,
+    password,
+    roles,
+    address,
+  }) => {
     const hodelUser = await User.findOne({ email }).lean();
     if (hodelUser) {
       throw new badRequestError("error user already rigisted");
@@ -72,6 +79,7 @@ class UserService {
       phone,
       password: passwordHash,
       roles: roles,
+      address,
     });
     return {
       data: null,
@@ -158,7 +166,7 @@ class UserService {
       .populate([
         {
           path: "author",
-          select: "userName email _id avatar",
+          select: "userName email _id avatar phone",
         },
         {
           path: "category",

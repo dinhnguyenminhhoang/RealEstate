@@ -178,6 +178,46 @@ const replyReportEmailForm = (customerName, reportTitle, replyMessage) => {
     `,
   };
 };
+const applicationEmailForm = (name, contactPhone = null) => {
+  return {
+    title: "Xác nhận đơn Yêu cầucủa bạn",
+    body: `
+      <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #28a745; padding: 20px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 24px;">Đơn Yêu cầuđã được ghi nhận</h1>
+          </div>
+          <div style="padding: 20px;">
+            <p>Xin chào <strong>${name}</strong>,</p>
+            <p>Cảm ơn bạn đã gửi đơn Yêu cầu cho bất động sản.</p>
+            <p>Chúng tôi đã nhận được thông tin của bạn và sẽ liên hệ lại trong thời gian sớm nhất.</p>
+            
+            ${
+              contactPhone
+                ? `
+            <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ:</p>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <p style="margin: 5px 0;"><strong>Hotline:</strong> ${contactPhone}</p>
+            </div>
+            `
+                : ""
+            }
+
+            <div style="margin: 25px 0; border-top: 1px dashed #ddd;"></div>
+            
+            <p>Bạn có thể theo dõi trạng thái đơn Yêu cầutrong tài khoản cá nhân của mình.</p>
+            
+            <p>Trân trọng,<br/>Đội ngũ hỗ trợ khách hàng</p>
+          </div>
+          <div style="background-color: #f1f1f1; text-align: center; padding: 10px; font-size: 12px; color: #666;">
+            <p>Email này được gửi tự động từ hệ thống. Vui lòng không trả lời trực tiếp.</p>
+            <p>© ${new Date().getFullYear()} Hệ thống Bất Động Sản. Mọi quyền được bảo lưu.</p>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+};
 
 module.exports = {
   confirmOrderForm,
@@ -188,4 +228,5 @@ module.exports = {
   confirmAccountForm,
   receiveReportEmailForm,
   replyReportEmailForm,
+  applicationEmailForm,
 };

@@ -18,6 +18,7 @@ class PostService {
       price,
       images,
       acreage,
+      type,
     } = data;
     if (!title || !address || !description || !price) {
       throw new NotFoundError("Missing parametor");
@@ -32,6 +33,7 @@ class PostService {
       price,
       images,
       acreage,
+      type,
     });
     if (post._id) {
       return "Create success";
@@ -115,9 +117,13 @@ class PostService {
       filters.address = { $regex: query.address, $options: "i" };
       delete query.address;
     }
+    if (query.type) {
+      filters.type = query.type;
+      delete query.type;
+    }
 
     filters = { ...filters, ...query };
-
+    console.log("filters", filters);
     let posts = await paginate({
       model: Post,
       limit: +limit,

@@ -26,6 +26,7 @@ import NewsDetails from "./pages/NewsDetail/NewsDetails";
 import FavoriteList from "./pages/User/FavoriteList/FavoriteList";
 import ManagerReport from "./pages/Admin/ManagerReport/ManagerReport";
 import AdminDashboard from "./pages/Admin/AdminDashboard/AdminDashboard";
+import CustomerApplication from "./pages/User/CustomerApplication/CustomerApplication";
 
 const App = () => {
   const router = createBrowserRouter(
@@ -51,6 +52,10 @@ const App = () => {
           <Route path="/user/dashboard" element={<Dashboard />} />
           <Route path="/user/action-post" element={<CreateOrUpdatePost />} />
           <Route path="/user/manage-post" element={<UserManagePost />} />
+          <Route
+            path="/user/customer-application"
+            element={<CustomerApplication />}
+          />
         </Route>
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

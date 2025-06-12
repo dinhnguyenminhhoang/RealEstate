@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  CustomerServiceFilled,
   DashboardOutlined,
   PlusOutlined,
   SolutionOutlined,
@@ -10,6 +11,11 @@ const menuItems = [
   { label: "Tổng quan", icon: <DashboardOutlined />, path: "/user/dashboard" },
   { label: "Tin đăng", icon: <AppstoreOutlined />, path: "/user/manage-post" },
   { label: "Đăng tin", icon: <PlusOutlined />, path: "/user/action-post" },
+  {
+    label: "Khách hàng",
+    icon: <CustomerServiceFilled />,
+    path: "/user/customer-application",
+  },
   { label: "Tài khoản", icon: <SolutionOutlined />, path: "/profile" },
 ];
 
