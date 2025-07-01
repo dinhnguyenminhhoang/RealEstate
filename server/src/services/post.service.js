@@ -73,7 +73,7 @@ class PostService {
     sort,
     ...query
   }) => {
-    filters = { ...filters, isDelete: "active" };
+    filters = { ...filters, isDelete: "active", verification: true };
     if (sort) {
       const sortObj = {};
       const sortSplit = sort.split("-");
@@ -178,7 +178,7 @@ class PostService {
     return postObject;
   };
   static getPostOutstanding = async ({ limit = 8 } = {}) => {
-    const posts = await Post.find({ isDelete: "active" })
+    const posts = await Post.find({ isDelete: "active", verification: true })
       .sort({ views: -1 })
       .limit(+limit)
       .select(unGetSelectData(["isDelete", "__v"]))
@@ -269,7 +269,7 @@ class PostService {
       throw new NotFoundError("Post not found!");
     }
 
-    const result = await Post.findOneAndUpdate(
+    const result = await Post.findByIdAndDelete(
       { _id: id },
       { isDelete: "inActive" },
       {

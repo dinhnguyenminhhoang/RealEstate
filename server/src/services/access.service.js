@@ -82,6 +82,7 @@ class AccessService {
     }
     if (foundUser.status !== "active")
       throw new badRequestError("Tài khoản bị khóa");
+
     const { _id: userId, userName, roles, phone } = foundUser;
     const match = await bcrypt.compare(password, foundUser.password);
     if (!match) throw new AuthFailureError("Authentication Error");

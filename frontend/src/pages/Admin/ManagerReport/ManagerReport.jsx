@@ -242,7 +242,7 @@ const ReportManagement = () => {
         <div className="flex items-center gap-2">
           <Avatar
             src={
-              record.author.avatar
+              record.author?.avatar
                 ? `https://picsum.photos/40/40?random=${record.author._id}`
                 : null
             }
