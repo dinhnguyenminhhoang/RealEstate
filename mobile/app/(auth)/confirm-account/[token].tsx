@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { jwtDecode } from "jwt-decode";
 import { confirmAccountApi } from "@/services/authService";
 import { storage } from "@/utils/storage";
 import { useNotification } from "@/hooks/useNotification";
@@ -18,6 +19,15 @@ export default function ConfirmAccountScreen() {
       try {
         if (token) {
           await storage.setToken(token);
+          // Decode token to get userId for x-client-id header (required by authentication middleware)
+          try {
+            const decoded = jwtDecode<{ userId: string }>(token);
+            if (decoded.userId) {
+              await storage.setUserId(decoded.userId);
+            }
+          } catch (decodeErr) {
+            console.log("Failed to decode token:", decodeErr);
+          }
         }
         await confirmAccountApi();
         setStatus("success");

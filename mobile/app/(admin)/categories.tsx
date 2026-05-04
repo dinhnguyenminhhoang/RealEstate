@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Modal, Portal, TextInput } from "react-native-paper";
-
 import {
   getAllCategoryApi,
   createCategoryApi,
@@ -29,6 +28,7 @@ export default function AdminCategoriesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: "", description: "" });
+  const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -44,6 +44,7 @@ export default function AdminCategoriesScreen() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
@@ -55,6 +56,7 @@ export default function AdminCategoriesScreen() {
     setForm({ name: "", description: "" });
     setModalVisible(true);
   };
+
   const openEdit = (cat: Category) => {
     setEditing(cat);
     setForm({ name: cat.name, description: cat.description || "" });
@@ -62,30 +64,34 @@ export default function AdminCategoriesScreen() {
   };
 
   const handleSave = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
     try {
       if (editing) {
         await adminEditCategoryApi(form, editing._id);
         showSuccess("Cập nhật thành công");
       } else {
         await createCategoryApi(form);
-        showSuccess("Tạo thành công");
+        showSuccess("Tạo danh mục thành công");
       }
       setModalVisible(false);
       fetchData();
     } catch (e) {
       handleError(e);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert("Xác nhận", "Xóa danh mục này?", [
+  const handleDelete = (cat: Category) => {
+    Alert.alert("Xác nhận", `Xóa danh mục "${cat.name}"?`, [
       { text: "Hủy", style: "cancel" },
       {
         text: "Xóa",
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteCategoryApi(id);
+            await deleteCategoryApi(cat._id);
             showSuccess("Đã xóa");
             fetchData();
           } catch (e) {
@@ -105,30 +111,73 @@ export default function AdminCategoriesScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="px-4 pt-3 pb-2 flex-row items-center justify-between">
+        <Text className="text-gray-500 text-sm">
+          {categories.length} danh mục
+        </Text>
+        <Pressable
+          onPress={openCreate}
+          className="bg-red-500 px-3.5 py-2 rounded-lg flex-row items-center"
+        >
+          <Ionicons name="add" size={18} color="white" />
+          <Text className="text-white text-sm font-semibold ml-1">
+            Thêm mới
+          </Text>
+        </Pressable>
+      </View>
+
       <FlatList
         data={categories}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#DC2626"]}
+          />
         }
         ListEmptyComponent={
           <View className="items-center mt-20">
             <Ionicons name="folder-outline" size={64} color="#D1D5DB" />
-            <Text className="text-gray-400 mt-4">Chưa có danh mục</Text>
+            <Text className="text-gray-400 text-lg mt-4">Chưa có danh mục</Text>
+            <Pressable
+              onPress={openCreate}
+              className="mt-4 bg-red-500 px-4 py-2 rounded-lg"
+            >
+              <Text className="text-white font-medium">
+                Tạo danh mục đầu tiên
+              </Text>
+            </Pressable>
           </View>
         }
-        renderItem={({ item }) => (
-          <View className="bg-white rounded-xl p-4 mb-3 shadow-sm flex-row items-center justify-between">
+        renderItem={({ item, index }) => (
+          <View className="bg-white rounded-xl p-4 mb-2.5 shadow-sm flex-row items-center">
+            <View
+              className="w-10 h-10 rounded-xl items-center justify-center mr-3"
+              style={{ backgroundColor: `hsl(${index * 40}, 80%, 95%)` }}
+            >
+              <Ionicons
+                name="folder"
+                size={20}
+                color={`hsl(${index * 40}, 70%, 50%)`}
+              />
+            </View>
             <View className="flex-1">
-              <Text className="font-bold text-gray-900">{item.name}</Text>
+              <Text className="font-bold text-gray-900 text-base">
+                {item.name}
+              </Text>
               {item.description && (
-                <Text className="text-gray-500 text-sm mt-1" numberOfLines={1}>
+                <Text
+                  className="text-gray-500 text-sm mt-0.5"
+                  numberOfLines={2}
+                >
                   {item.description}
                 </Text>
               )}
             </View>
-            <View className="flex-row gap-1">
+            <View className="flex-row gap-1.5">
               <Pressable
                 onPress={() => openEdit(item)}
                 className="bg-blue-50 p-2 rounded-lg"
@@ -136,7 +185,7 @@ export default function AdminCategoriesScreen() {
                 <Ionicons name="create-outline" size={18} color="#2563EB" />
               </Pressable>
               <Pressable
-                onPress={() => handleDelete(item._id)}
+                onPress={() => handleDelete(item)}
                 className="bg-red-50 p-2 rounded-lg"
               >
                 <Ionicons name="trash-outline" size={18} color="#DC2626" />
@@ -145,22 +194,8 @@ export default function AdminCategoriesScreen() {
           </View>
         )}
       />
-      <Button
-        mode="contained"
-        icon="plus"
-        onPress={openCreate}
-        buttonColor="#DC2626"
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          borderRadius: 28,
-        }}
-        contentStyle={{ paddingVertical: 4 }}
-      >
-        Thêm
-      </Button>
 
+      {/* Modal */}
       <Portal>
         <Modal
           visible={modalVisible}
@@ -172,8 +207,8 @@ export default function AdminCategoriesScreen() {
             padding: 20,
           }}
         >
-          <Text className="text-lg font-bold mb-3">
-            {editing ? "Sửa danh mục" : "Thêm danh mục"}
+          <Text className="text-lg font-bold text-gray-900 mb-4">
+            {editing ? "Sửa danh mục" : "Thêm danh mục mới"}
           </Text>
           <TextInput
             label="Tên danh mục *"
@@ -181,6 +216,8 @@ export default function AdminCategoriesScreen() {
             onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
             mode="outlined"
             className="mb-3 bg-white"
+            outlineColor="#D1D5DB"
+            activeOutlineColor="#DC2626"
           />
           <TextInput
             label="Mô tả"
@@ -188,19 +225,26 @@ export default function AdminCategoriesScreen() {
             onChangeText={(v) => setForm((p) => ({ ...p, description: v }))}
             mode="outlined"
             multiline
-            className="mb-3 bg-white"
+            numberOfLines={3}
+            className="mb-4 bg-white"
+            outlineColor="#D1D5DB"
+            activeOutlineColor="#DC2626"
           />
           <View className="flex-row gap-3">
             <Button
               mode="outlined"
               onPress={() => setModalVisible(false)}
               className="flex-1"
+              textColor="#6B7280"
+              style={{ borderColor: "#D1D5DB" }}
             >
               Hủy
             </Button>
             <Button
               mode="contained"
               onPress={handleSave}
+              loading={saving}
+              disabled={saving || !form.name.trim()}
               buttonColor="#DC2626"
               className="flex-1"
             >

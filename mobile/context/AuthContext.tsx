@@ -93,8 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { user: userData, tokens } = res.data;
         await storage.setToken(tokens.accessToken);
         await storage.setUserId(userData._id);
-        setUser(userData as User);
         const userRole = checkRole(tokens.accessToken);
+        // Fetch full user profile (login response only has _id, userName, email, phone)
+        await getUserProfile();
         return userRole;
       }
       return null;

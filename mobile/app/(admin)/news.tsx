@@ -7,10 +7,12 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Modal, Portal, TextInput } from "react-native-paper";
-
+import { Image } from "expo-image";
+import { router } from "expo-router";
 import {
   getAllNewsApi,
   createNewsApi,
@@ -20,6 +22,7 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { News } from "@/types";
 import { formatDateTime } from "@/utils";
+import { getImageUrl } from "@/constants/config";
 
 export default function AdminNewsScreen() {
   const [news, setNews] = useState<News[]>([]);
@@ -30,6 +33,7 @@ export default function AdminNewsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<News | null>(null);
   const [form, setForm] = useState({ title: "", content: "", tags: "" });
+  const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -45,6 +49,7 @@ export default function AdminNewsScreen() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
@@ -56,6 +61,7 @@ export default function AdminNewsScreen() {
     setForm({ title: "", content: "", tags: "" });
     setModalVisible(true);
   };
+
   const openEdit = (item: News) => {
     setEditing(item);
     setForm({
@@ -67,6 +73,8 @@ export default function AdminNewsScreen() {
   };
 
   const handleSave = async () => {
+    if (!form.title.trim() || !form.content.trim()) return;
+    setSaving(true);
     try {
       const payload = {
         ...form,
@@ -80,24 +88,26 @@ export default function AdminNewsScreen() {
         showSuccess("Cập nhật thành công");
       } else {
         await createNewsApi(payload);
-        showSuccess("Tạo thành công");
+        showSuccess("Tạo tin tức thành công");
       }
       setModalVisible(false);
       fetchData();
     } catch (e) {
       handleError(e);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert("Xác nhận", "Xóa tin tức này?", [
+  const handleDelete = (item: News) => {
+    Alert.alert("Xác nhận", `Xóa "${item.title}"?`, [
       { text: "Hủy", style: "cancel" },
       {
         text: "Xóa",
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteNewsApi(id);
+            await deleteNewsApi(item._id);
             showSuccess("Đã xóa");
             fetchData();
           } catch (e) {
@@ -117,127 +127,171 @@ export default function AdminNewsScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
+      <View className="px-4 pt-3 pb-2 flex-row items-center justify-between">
+        <Text className="text-gray-500 text-sm">{news.length} tin tức</Text>
+        <Pressable
+          onPress={openCreate}
+          className="bg-red-500 px-3.5 py-2 rounded-lg flex-row items-center"
+        >
+          <Ionicons name="add" size={18} color="white" />
+          <Text className="text-white text-sm font-semibold ml-1">
+            Thêm tin
+          </Text>
+        </Pressable>
+      </View>
+
       <FlatList
         data={news}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#DC2626"]}
+          />
         }
         ListEmptyComponent={
           <View className="items-center mt-20">
             <Ionicons name="newspaper-outline" size={64} color="#D1D5DB" />
-            <Text className="text-gray-400 mt-4">Chưa có tin tức</Text>
+            <Text className="text-gray-400 text-lg mt-4">Chưa có tin tức</Text>
           </View>
         }
         renderItem={({ item }) => (
-          <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-            <Text className="font-bold text-gray-900" numberOfLines={2}>
-              {item.title}
-            </Text>
-            {item.tags && item.tags.length > 0 && (
-              <View className="flex-row flex-wrap mt-1.5 gap-1">
-                {item.tags.slice(0, 3).map((t) => (
-                  <View key={t} className="bg-blue-50 px-2 py-0.5 rounded">
-                    <Text className="text-blue-600 text-xs">{t}</Text>
-                  </View>
-                ))}
-              </View>
+          <Pressable
+            onPress={() => router.push(`/news/${item._id}`)}
+            className="bg-white rounded-xl overflow-hidden mb-2.5 shadow-sm"
+          >
+            {/* Thumbnail */}
+            {item.thumb && (
+              <Image
+                source={{ uri: getImageUrl(item.thumb) }}
+                style={{ width: "100%", height: 140 }}
+                contentFit="cover"
+              />
             )}
-            {item.createdAt && (
-              <Text className="text-gray-400 text-xs mt-1.5">
-                {formatDateTime(item.createdAt)}
+            <View className="p-4">
+              <Text
+                className="font-bold text-gray-900 text-base"
+                numberOfLines={2}
+              >
+                {item.title}
               </Text>
-            )}
-            <View className="flex-row gap-2 mt-3">
-              <Pressable
-                onPress={() => openEdit(item)}
-                className="bg-blue-50 px-3 py-1.5 rounded-lg flex-row items-center"
-              >
-                <Ionicons name="create-outline" size={16} color="#2563EB" />
-                <Text className="text-blue-600 text-sm ml-1">Sửa</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleDelete(item._id)}
-                className="bg-red-50 px-3 py-1.5 rounded-lg flex-row items-center"
-              >
-                <Ionicons name="trash-outline" size={16} color="#DC2626" />
-                <Text className="text-red-600 text-sm ml-1">Xóa</Text>
-              </Pressable>
+
+              {item.tags && item.tags.length > 0 && (
+                <View className="flex-row flex-wrap gap-1 mt-2">
+                  {item.tags.map((t) => (
+                    <View
+                      key={t}
+                      className="bg-blue-50 px-2 py-0.5 rounded-full"
+                    >
+                      <Text className="text-blue-600 text-xs">{t}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {item.createdAt && (
+                <Text className="text-gray-400 text-xs mt-2">
+                  {formatDateTime(item.createdAt)}
+                </Text>
+              )}
+
+              {/* Actions */}
+              <View className="flex-row gap-2 mt-3 pt-3 border-t border-gray-100">
+                <Pressable
+                  onPress={() => openEdit(item)}
+                  className="bg-blue-50 px-3 py-2 rounded-lg flex-row items-center flex-1 justify-center"
+                >
+                  <Ionicons name="create-outline" size={16} color="#2563EB" />
+                  <Text className="text-blue-600 text-sm ml-1 font-medium">
+                    Sửa
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleDelete(item)}
+                  className="bg-red-50 px-3 py-2 rounded-lg flex-row items-center flex-1 justify-center"
+                >
+                  <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                  <Text className="text-red-600 text-sm ml-1 font-medium">
+                    Xóa
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
+          </Pressable>
         )}
       />
-      <Button
-        mode="contained"
-        icon="plus"
-        onPress={openCreate}
-        buttonColor="#DC2626"
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: 20,
-          borderRadius: 28,
-        }}
-        contentStyle={{ paddingVertical: 4 }}
-      >
-        Thêm
-      </Button>
 
+      {/* Modal */}
       <Portal>
         <Modal
           visible={modalVisible}
           onDismiss={() => setModalVisible(false)}
           contentContainerStyle={{
             backgroundColor: "white",
-            margin: 20,
+            margin: 16,
             borderRadius: 16,
             padding: 20,
+            maxHeight: "85%",
           }}
         >
-          <Text className="text-lg font-bold mb-3">
-            {editing ? "Sửa tin tức" : "Thêm tin tức"}
-          </Text>
-          <TextInput
-            label="Tiêu đề *"
-            value={form.title}
-            onChangeText={(v) => setForm((p) => ({ ...p, title: v }))}
-            mode="outlined"
-            className="mb-2 bg-white"
-          />
-          <TextInput
-            label="Nội dung *"
-            value={form.content}
-            onChangeText={(v) => setForm((p) => ({ ...p, content: v }))}
-            mode="outlined"
-            multiline
-            numberOfLines={6}
-            className="mb-2 bg-white"
-          />
-          <TextInput
-            label="Tags (cách nhau dấu phẩy)"
-            value={form.tags}
-            onChangeText={(v) => setForm((p) => ({ ...p, tags: v }))}
-            mode="outlined"
-            className="mb-2 bg-white"
-          />
-          <View className="flex-row gap-3 mt-2">
-            <Button
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text className="text-lg font-bold text-gray-900 mb-4">
+              {editing ? "Sửa tin tức" : "Thêm tin tức mới"}
+            </Text>
+            <TextInput
+              label="Tiêu đề *"
+              value={form.title}
+              onChangeText={(v) => setForm((p) => ({ ...p, title: v }))}
               mode="outlined"
-              onPress={() => setModalVisible(false)}
-              className="flex-1"
-            >
-              Hủy
-            </Button>
-            <Button
-              mode="contained"
-              onPress={handleSave}
-              buttonColor="#DC2626"
-              className="flex-1"
-            >
-              Lưu
-            </Button>
-          </View>
+              className="mb-3 bg-white"
+              outlineColor="#D1D5DB"
+              activeOutlineColor="#DC2626"
+            />
+            <TextInput
+              label="Nội dung *"
+              value={form.content}
+              onChangeText={(v) => setForm((p) => ({ ...p, content: v }))}
+              mode="outlined"
+              multiline
+              numberOfLines={8}
+              className="mb-3 bg-white"
+              outlineColor="#D1D5DB"
+              activeOutlineColor="#DC2626"
+            />
+            <TextInput
+              label="Tags (phân cách bằng dấu phẩy)"
+              value={form.tags}
+              onChangeText={(v) => setForm((p) => ({ ...p, tags: v }))}
+              mode="outlined"
+              className="mb-4 bg-white"
+              outlineColor="#D1D5DB"
+              activeOutlineColor="#DC2626"
+              placeholder="ví dụ: bất động sản, đầu tư, thị trường"
+            />
+            <View className="flex-row gap-3">
+              <Button
+                mode="outlined"
+                onPress={() => setModalVisible(false)}
+                className="flex-1"
+                textColor="#6B7280"
+                style={{ borderColor: "#D1D5DB" }}
+              >
+                Hủy
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleSave}
+                loading={saving}
+                disabled={saving || !form.title.trim() || !form.content.trim()}
+                buttonColor="#DC2626"
+                className="flex-1"
+              >
+                Lưu
+              </Button>
+            </View>
+          </ScrollView>
         </Modal>
       </Portal>
     </View>

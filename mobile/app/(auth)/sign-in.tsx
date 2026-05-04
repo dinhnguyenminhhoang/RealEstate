@@ -82,7 +82,7 @@ export default function SignInScreen() {
               className="bg-white"
             />
 
-            <Link href="/" asChild>
+            <Link href="/(auth)/forgot-password" asChild>
               <Pressable className="self-end">
                 <Text className="text-red-600 text-sm font-medium">
                   Quên mật khẩu?
