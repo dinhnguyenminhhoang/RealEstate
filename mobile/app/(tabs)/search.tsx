@@ -34,7 +34,6 @@ export default function SearchScreen() {
     totalPages: 1,
   });
 
-  // Filters
   const [activeType, setActiveType] = useState<"SELL" | "RENT">("SELL");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     params.category || null,
@@ -43,7 +42,6 @@ export default function SearchScreen() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
 
-  // Filter modal
   const [filterVisible, setFilterVisible] = useState(false);
 
   const fetchPosts = useCallback(
