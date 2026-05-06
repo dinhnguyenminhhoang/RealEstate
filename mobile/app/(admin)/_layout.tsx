@@ -15,12 +15,12 @@ export default function AdminLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#111827" },
-        headerTintColor: "#FFFFFF",
+        headerStyle: { backgroundColor: "#FFFFFF" },
+        headerTintColor: "#111827",
         headerTitleStyle: { fontWeight: "700" },
       }}
     >
-      <Stack.Screen name="dashboard" options={{ title: "Admin Dashboard" }} />
+      <Stack.Screen name="dashboard" options={{ headerShown: false }} />
       <Stack.Screen name="users" options={{ title: "Quản lý người dùng" }} />
       <Stack.Screen name="categories" options={{ title: "Quản lý danh mục" }} />
       <Stack.Screen name="posts" options={{ title: "Quản lý bài đăng" }} />

@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  StyleSheet,
 } from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { Link } from "expo-router";
@@ -27,9 +28,8 @@ export default function SignUpScreen() {
   const { loading, handleSignUp } = useAuthForm();
   const { showError } = useNotification();
 
-  const updateField = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+  const updateField = (field: string, value: string) =>
+    setForm((p) => ({ ...p, [field]: value }));
 
   const onSubmit = () => {
     if (
@@ -39,58 +39,51 @@ export default function SignUpScreen() {
       !form.password ||
       !form.address
     ) {
-      showError("Vui lòng điền đầy đủ thông tin bắt buộc");
-      return;
+      return showError("Vui lòng điền đầy đủ thông tin bắt buộc");
     }
-    if (form.password !== form.confirmPassword) {
-      showError("Mật khẩu xác nhận không khớp");
-      return;
-    }
-    if (form.password.length < 6) {
-      showError("Mật khẩu phải có ít nhất 6 ký tự");
-      return;
-    }
+    if (form.password !== form.confirmPassword)
+      return showError("Mật khẩu xác nhận không khớp");
+    if (form.password.length < 6)
+      return showError("Mật khẩu phải có ít nhất 6 ký tự");
     const { confirmPassword, ...payload } = form;
     handleSignUp(payload);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={styles.flex1}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          className="px-6"
         >
           {/* Header */}
-          <View className="items-center mt-8 mb-8">
-            <View className="w-16 h-16 bg-red-500 rounded-2xl items-center justify-center mb-3">
-              <Text className="text-white text-2xl font-bold">BĐS</Text>
+          <View style={styles.headerContainer}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>BĐS</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              Tạo tài khoản
-            </Text>
-            <Text className="text-sm text-gray-500 mt-1">
+            <Text style={styles.title}>Tạo tài khoản</Text>
+            <Text style={styles.subtitle}>
               Đăng ký để bắt đầu giao dịch bất động sản
             </Text>
           </View>
 
           {/* Form */}
-          <View className="gap-3">
+          <View style={styles.formContainer}>
             <TextInput
               label="Họ và tên *"
               value={form.userName}
               onChangeText={(v) => updateField("userName", v)}
               mode="outlined"
+              multiline={false}
               left={<TextInput.Icon icon="account-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Email *"
               value={form.email}
@@ -98,51 +91,56 @@ export default function SignUpScreen() {
               mode="outlined"
               keyboardType="email-address"
               autoCapitalize="none"
+              multiline={false}
               left={<TextInput.Icon icon="email-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Số điện thoại *"
               value={form.phone}
               onChangeText={(v) => updateField("phone", v)}
               mode="outlined"
               keyboardType="phone-pad"
+              multiline={false}
               left={<TextInput.Icon icon="phone-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Địa chỉ *"
               value={form.address}
               onChangeText={(v) => updateField("address", v)}
               mode="outlined"
+              multiline={false}
               left={<TextInput.Icon icon="map-marker-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Mã số thuế"
               value={form.taxCode}
               onChangeText={(v) => updateField("taxCode", v)}
               mode="outlined"
+              multiline={false}
               left={<TextInput.Icon icon="file-document-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Mật khẩu *"
               value={form.password}
               onChangeText={(v) => updateField("password", v)}
               mode="outlined"
+              multiline={false}
               secureTextEntry={!showPassword}
               left={<TextInput.Icon icon="lock-outline" />}
               right={
@@ -153,21 +151,22 @@ export default function SignUpScreen() {
               }
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <TextInput
               label="Xác nhận mật khẩu *"
               value={form.confirmPassword}
               onChangeText={(v) => updateField("confirmPassword", v)}
               mode="outlined"
+              multiline={false}
               secureTextEntry={!showPassword}
               left={<TextInput.Icon icon="lock-check-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
-
             <Button
               mode="contained"
               onPress={onSubmit}
@@ -175,22 +174,20 @@ export default function SignUpScreen() {
               disabled={loading}
               buttonColor="#DC2626"
               textColor="white"
-              contentStyle={{ paddingVertical: 6 }}
-              labelStyle={{ fontSize: 16, fontWeight: "700" }}
-              className="mt-2 rounded-lg"
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+              style={styles.button}
             >
               Đăng ký
             </Button>
           </View>
 
           {/* Footer */}
-          <View className="flex-row justify-center mt-6 mb-8">
-            <Text className="text-gray-500 text-base">Đã có tài khoản? </Text>
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Đã có tài khoản? </Text>
             <Link href="/(auth)/sign-in" asChild>
               <Pressable>
-                <Text className="text-red-600 text-base font-bold">
-                  Đăng nhập
-                </Text>
+                <Text style={styles.footerLink}>Đăng nhập</Text>
               </Pressable>
             </Link>
           </View>
@@ -199,3 +196,78 @@ export default function SignUpScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  flex1: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  headerContainer: {
+    alignItems: "center",
+    marginTop: 32,
+    marginBottom: 32,
+  },
+  logoContainer: {
+    width: 64,
+    height: 64,
+    backgroundColor: "#DC2626",
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  logoText: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 4,
+  },
+  formContainer: {
+    gap: 12,
+  },
+  input: {
+    backgroundColor: "#fff",
+  },
+  button: {
+    marginTop: 8,
+    borderRadius: 10,
+  },
+  buttonContent: {
+    paddingVertical: 6,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+    marginBottom: 32,
+  },
+  footerText: {
+    color: "#6B7280",
+    fontSize: 15,
+  },
+  footerLink: {
+    color: "#DC2626",
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+});

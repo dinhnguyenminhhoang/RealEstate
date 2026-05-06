@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,19 +39,19 @@ export default function ForgotPasswordScreen() {
 
   if (sent) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Text className="text-6xl mb-4">📧</Text>
-        <Text className="text-xl font-bold text-gray-900 text-center">Kiểm tra email của bạn</Text>
-        <Text className="text-gray-500 text-center mt-3 leading-6">
+      <SafeAreaView style={styles.safeAreaCenter}>
+        <Text style={styles.successIcon}>📧</Text>
+        <Text style={styles.successTitle}>Kiểm tra email của bạn</Text>
+        <Text style={styles.successSubtitle}>
           Chúng tôi đã gửi link đặt lại mật khẩu đến{"\n"}
-          <Text className="font-bold text-gray-900">{email}</Text>
+          <Text style={styles.boldText}>{email}</Text>
         </Text>
         <Button
           mode="contained"
           onPress={() => router.replace("/(auth)/sign-in")}
           buttonColor="#DC2626"
-          className="mt-8 w-full"
-          contentStyle={{ paddingVertical: 4 }}
+          style={styles.backButton}
+          contentStyle={styles.backButtonContent}
         >
           Quay lại Đăng nhập
         </Button>
@@ -52,29 +60,27 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={styles.flex1}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          className="px-6"
         >
-          {/* Header */}
-          <View className="items-center mt-16 mb-10">
-            <View className="w-20 h-20 bg-red-100 rounded-full items-center justify-center mb-4">
-              <Text className="text-4xl">🔒</Text>
+          <View style={styles.headerContainer}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>🔒</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">Quên mật khẩu?</Text>
-            <Text className="text-base text-gray-500 mt-2 text-center leading-6">
-              Nhập email đã đăng ký, chúng tôi sẽ gửi{"\n"}link đặt lại mật khẩu cho bạn
+            <Text style={styles.title}>Quên mật khẩu?</Text>
+            <Text style={styles.subtitle}>
+              Nhập email đã đăng ký, chúng tôi sẽ gửi{"\n"}link đặt lại mật khẩu
+              cho bạn
             </Text>
           </View>
 
-          {/* Form */}
-          <View className="gap-4">
+          <View style={styles.formContainer}>
             <TextInput
               label="Email"
               value={email}
@@ -83,10 +89,12 @@ export default function ForgotPasswordScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              multiline={false}
               left={<TextInput.Icon icon="email-outline" />}
               outlineColor="#D1D5DB"
               activeOutlineColor="#DC2626"
-              className="bg-white"
+              textColor="#111827"
+              style={styles.input}
             />
 
             <Button
@@ -96,19 +104,19 @@ export default function ForgotPasswordScreen() {
               disabled={loading || !email.trim()}
               buttonColor="#DC2626"
               textColor="white"
-              contentStyle={{ paddingVertical: 6 }}
-              labelStyle={{ fontSize: 16, fontWeight: "700" }}
-              className="mt-2 rounded-lg"
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+              style={styles.button}
             >
               Gửi link đặt lại
             </Button>
           </View>
 
           {/* Back */}
-          <View className="flex-row justify-center mt-8">
+          <View style={styles.footerContainer}>
             <Link href="/(auth)/sign-in" asChild>
-              <Pressable className="flex-row items-center">
-                <Text className="text-red-600 text-base font-medium">← Quay lại Đăng nhập</Text>
+              <Pressable style={styles.backLinkContainer}>
+                <Text style={styles.backLinkText}>← Quay lại Đăng nhập</Text>
               </Pressable>
             </Link>
           </View>
@@ -117,3 +125,111 @@ export default function ForgotPasswordScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  safeAreaCenter: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  flex1: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  successIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#111827",
+    textAlign: "center",
+  },
+  successSubtitle: {
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 24,
+  },
+  boldText: {
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  backButton: {
+    marginTop: 32,
+    width: "100%",
+  },
+  backButtonContent: {
+    paddingVertical: 4,
+  },
+  headerContainer: {
+    alignItems: "center",
+    marginTop: 64,
+    marginBottom: 40,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  logoText: {
+    fontSize: 36,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  formContainer: {
+    gap: 16,
+  },
+  input: {
+    backgroundColor: "#fff",
+  },
+  button: {
+    marginTop: 8,
+    borderRadius: 10,
+  },
+  buttonContent: {
+    paddingVertical: 6,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 32,
+  },
+  backLinkContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backLinkText: {
+    color: "#DC2626",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+});
