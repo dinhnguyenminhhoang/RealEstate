@@ -9,5 +9,5 @@ export const DEFAULT_PAGE = 1;
 export const getImageUrl = (path: string) => {
   if (!path) return "";
   if (path.startsWith("http")) return path;
-  return `${API_BASE_URL.replace("/v1/api", "")}${path}`;
+  return `${API_BASE_URL}${path}`;
 };

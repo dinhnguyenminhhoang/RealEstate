@@ -8,17 +8,31 @@ import {
   Alert,
   Pressable,
   ScrollView,
+  TextInput as RNTextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, Modal, Portal, TextInput } from "react-native-paper";
+import { Button as PaperButton, TextInput } from "react-native-paper";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import {
+  RichEditor,
+  RichToolbar,
+  actions,
+} from "react-native-pell-rich-editor";
+import { useRef } from "react";
+import * as ImagePicker from "expo-image-picker";
 import {
   getAllNewsApi,
   createNewsApi,
   adminEditNewsApi,
   deleteNewsApi,
 } from "@/services/newsService";
+import { uploadImageApi } from "@/services/uploadService";
 import { useNotification } from "@/hooks/useNotification";
 import { News } from "@/types";
 import { formatDateTime } from "@/utils";
@@ -28,12 +42,21 @@ export default function AdminNewsScreen() {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
   const { showSuccess, handleError } = useNotification();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<News | null>(null);
-  const [form, setForm] = useState({ title: "", content: "", tags: "" });
+  const [form, setForm] = useState({
+    title: "",
+    content: "",
+    tags: "",
+    thumb: "",
+  });
+  const [localThumb, setLocalThumb] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const richText = useRef<RichEditor>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,7 +81,8 @@ export default function AdminNewsScreen() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ title: "", content: "", tags: "" });
+    setForm({ title: "", content: "", tags: "", thumb: "" });
+    setLocalThumb("");
     setModalVisible(true);
   };
 
@@ -68,8 +92,48 @@ export default function AdminNewsScreen() {
       title: item.title,
       content: item.content,
       tags: item.tags?.join(", ") || "",
+      thumb: item.thumb || "",
     });
+    setLocalThumb("");
     setModalVisible(true);
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        const localUri = result.assets[0].uri;
+        setLocalThumb(localUri);
+        setUploading(true);
+
+        uploadImageApi([localUri])
+          .then((res: any) => {
+            const uploadedPath =
+              res?.data?.[0]?.path ||
+              res?.data?.data?.[0]?.path ||
+              res?.data?.url ||
+              res?.url;
+            if (uploadedPath) {
+              setForm((p) => ({ ...p, thumb: uploadedPath }));
+            } else {
+              showSuccess("Không nhận được ảnh trả về từ server");
+            }
+          })
+          .catch((e) => {
+            handleError(e);
+          })
+          .finally(() => {
+            setUploading(false);
+          });
+      }
+    } catch (e) {
+      handleError(e);
+    }
   };
 
   const handleSave = async () => {
@@ -108,7 +172,7 @@ export default function AdminNewsScreen() {
         onPress: async () => {
           try {
             await deleteNewsApi(item._id);
-            showSuccess("Đã xóa");
+            showSuccess("Đã xóa tin tức");
             fetchData();
           } catch (e) {
             handleError(e);
@@ -118,30 +182,67 @@ export default function AdminNewsScreen() {
     ]);
   };
 
+  const filtered = news.filter((item) =>
+    item.title.toLowerCase().includes(search.toLowerCase()),
+  );
+
   if (loading)
     return (
-      <View className="flex-1 items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-gray-50">
         <ActivityIndicator size="large" color="#DC2626" />
       </View>
     );
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="px-4 pt-3 pb-2 flex-row items-center justify-between">
-        <Text className="text-gray-500 text-sm">{news.length} tin tức</Text>
-        <Pressable
-          onPress={openCreate}
-          className="bg-red-500 px-3.5 py-2 rounded-lg flex-row items-center"
-        >
-          <Ionicons name="add" size={18} color="white" />
-          <Text className="text-white text-sm font-semibold ml-1">
-            Thêm tin
-          </Text>
-        </Pressable>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="px-4 pt-4 pb-2">
+        {/* Header */}
+        <View className="flex-row items-center justify-between mb-4 mt-2">
+          <View className="flex-row items-center">
+            <Pressable
+              onPress={() => router.back()}
+              className="mr-3 p-2 rounded-full bg-white border border-gray-100 shadow-sm"
+            >
+              <Ionicons name="arrow-back" size={20} color="#4B5563" />
+            </Pressable>
+            <View>
+              <Text className="text-gray-900 text-xl font-bold">Tin tức</Text>
+              <Text className="text-gray-500 text-sm">Quản lý bài viết</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Search & Add */}
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1 flex-row items-center bg-white border border-gray-200 rounded-xl px-3 h-11">
+            <Ionicons name="search" size={20} color="#9CA3AF" />
+            <RNTextInput
+              className="flex-1 ml-2 text-gray-900 text-sm h-full"
+              placeholder="Tìm theo tiêu đề..."
+              placeholderTextColor="#6B7280"
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")} className="p-1">
+                <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+              </Pressable>
+            )}
+          </View>
+          <Pressable
+            onPress={openCreate}
+            className="bg-gray-900 h-11 w-11 rounded-xl items-center justify-center shadow-sm"
+          >
+            <Ionicons name="add" size={24} color="white" />
+          </Pressable>
+        </View>
+        <Text className="text-gray-400 text-xs mt-2">
+          Tổng: {filtered.length} tin tức
+        </Text>
       </View>
 
       <FlatList
-        data={news}
+        data={filtered}
         keyExtractor={(item) => item._id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         refreshControl={
@@ -154,21 +255,24 @@ export default function AdminNewsScreen() {
         ListEmptyComponent={
           <View className="items-center mt-20">
             <Ionicons name="newspaper-outline" size={64} color="#D1D5DB" />
-            <Text className="text-gray-400 text-lg mt-4">Chưa có tin tức</Text>
+            <Text className="text-gray-400 text-lg mt-4">Không có tin tức</Text>
           </View>
         }
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(`/news/${item._id}`)}
-            className="bg-white rounded-xl overflow-hidden mb-2.5 shadow-sm"
+            className="bg-white rounded-xl overflow-hidden mb-3 shadow-sm border border-gray-100"
           >
-            {/* Thumbnail */}
-            {item.thumb && (
+            {item.thumb ? (
               <Image
                 source={{ uri: getImageUrl(item.thumb) }}
                 style={{ width: "100%", height: 140 }}
                 contentFit="cover"
               />
+            ) : (
+              <View className="w-full h-32 bg-gray-100 items-center justify-center">
+                <Ionicons name="image-outline" size={32} color="#9CA3AF" />
+              </View>
             )}
             <View className="p-4">
               <Text
@@ -179,41 +283,51 @@ export default function AdminNewsScreen() {
               </Text>
 
               {item.tags && item.tags.length > 0 && (
-                <View className="flex-row flex-wrap gap-1 mt-2">
+                <View className="flex-row flex-wrap gap-1.5 mt-2">
                   {item.tags.map((t) => (
                     <View
                       key={t}
-                      className="bg-blue-50 px-2 py-0.5 rounded-full"
+                      className="bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100"
                     >
-                      <Text className="text-blue-600 text-xs">{t}</Text>
+                      <Text className="text-blue-700 text-xs font-medium">
+                        {t}
+                      </Text>
                     </View>
                   ))}
                 </View>
               )}
 
               {item.createdAt && (
-                <Text className="text-gray-400 text-xs mt-2">
-                  {formatDateTime(item.createdAt)}
-                </Text>
+                <View className="flex-row items-center mt-2">
+                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                  <Text className="text-gray-500 text-xs ml-1">
+                    {formatDateTime(item.createdAt)}
+                  </Text>
+                </View>
               )}
 
-              {/* Actions */}
               <View className="flex-row gap-2 mt-3 pt-3 border-t border-gray-100">
                 <Pressable
-                  onPress={() => openEdit(item)}
-                  className="bg-blue-50 px-3 py-2 rounded-lg flex-row items-center flex-1 justify-center"
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    openEdit(item);
+                  }}
+                  className="bg-blue-50 px-3 py-1.5 rounded-lg flex-row items-center flex-1 justify-center"
                 >
                   <Ionicons name="create-outline" size={16} color="#2563EB" />
-                  <Text className="text-blue-600 text-sm ml-1 font-medium">
+                  <Text className="text-blue-600 text-sm ml-1 font-semibold">
                     Sửa
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => handleDelete(item)}
-                  className="bg-red-50 px-3 py-2 rounded-lg flex-row items-center flex-1 justify-center"
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item);
+                  }}
+                  className="bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg flex-row items-center flex-1 justify-center"
                 >
                   <Ionicons name="trash-outline" size={16} color="#DC2626" />
-                  <Text className="text-red-600 text-sm ml-1 font-medium">
+                  <Text className="text-red-600 text-sm ml-1 font-semibold">
                     Xóa
                   </Text>
                 </Pressable>
@@ -223,77 +337,175 @@ export default function AdminNewsScreen() {
         )}
       />
 
-      {/* Modal */}
-      <Portal>
-        <Modal
-          visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
-          contentContainerStyle={{
-            backgroundColor: "white",
-            margin: 16,
-            borderRadius: 16,
-            padding: 20,
-            maxHeight: "85%",
-          }}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
         >
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className="text-lg font-bold text-gray-900 mb-4">
-              {editing ? "Sửa tin tức" : "Thêm tin tức mới"}
-            </Text>
-            <TextInput
-              label="Tiêu đề *"
-              value={form.title}
-              onChangeText={(v) => setForm((p) => ({ ...p, title: v }))}
-              mode="outlined"
-              className="mb-3 bg-white"
-              outlineColor="#D1D5DB"
-              activeOutlineColor="#DC2626"
-            />
-            <TextInput
-              label="Nội dung *"
-              value={form.content}
-              onChangeText={(v) => setForm((p) => ({ ...p, content: v }))}
-              mode="outlined"
-              multiline
-              numberOfLines={8}
-              className="mb-3 bg-white"
-              outlineColor="#D1D5DB"
-              activeOutlineColor="#DC2626"
-            />
-            <TextInput
-              label="Tags (phân cách bằng dấu phẩy)"
-              value={form.tags}
-              onChangeText={(v) => setForm((p) => ({ ...p, tags: v }))}
-              mode="outlined"
-              className="mb-4 bg-white"
-              outlineColor="#D1D5DB"
-              activeOutlineColor="#DC2626"
-              placeholder="ví dụ: bất động sản, đầu tư, thị trường"
-            />
-            <View className="flex-row gap-3">
-              <Button
-                mode="outlined"
-                onPress={() => setModalVisible(false)}
-                className="flex-1"
-                textColor="#6B7280"
-                style={{ borderColor: "#D1D5DB" }}
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="bg-white rounded-t-3xl h-[85%]">
+              {/* Header Modal */}
+              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-100">
+                <Text className="text-xl font-bold text-gray-900">
+                  {editing ? "Sửa tin tức" : "Thêm tin tức"}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalVisible(false);
+                  }}
+                  className="p-1.5 bg-gray-100 rounded-full"
+                >
+                  <Ionicons name="close" size={20} color="#4B5563" />
+                </Pressable>
+              </View>
+
+              <ScrollView
+                className="p-5"
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
               >
-                Hủy
-              </Button>
-              <Button
-                mode="contained"
-                onPress={handleSave}
-                loading={saving}
-                disabled={saving || !form.title.trim() || !form.content.trim()}
-                buttonColor="#DC2626"
-                className="flex-1"
-              >
-                Lưu
-              </Button>
+                <Text className="text-gray-700 text-sm font-medium mb-2">
+                  Ảnh đại diện (Thumbnail)
+                </Text>
+                <Pressable
+                  onPress={handlePickImage}
+                  className="bg-gray-50 border border-gray-200 border-dashed rounded-xl h-40 mb-4 items-center justify-center overflow-hidden"
+                >
+                  {localThumb || form.thumb ? (
+                    <>
+                      <Image
+                        source={{ uri: localThumb || getImageUrl(form.thumb) }}
+                        style={{ width: "100%", height: "100%", opacity: uploading ? 0.6 : 1 }}
+                        contentFit="cover"
+                      />
+                      {uploading && (
+                        <View className="absolute inset-0 items-center justify-center">
+                          <ActivityIndicator size="large" color="#ffffff" />
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <View className="items-center justify-center">
+                      <Ionicons
+                        name="cloud-upload-outline"
+                        size={32}
+                        color="#9CA3AF"
+                      />
+                      <Text className="text-gray-500 mt-2 font-medium">
+                        Nhấn để chọn ảnh
+                      </Text>
+                    </View>
+                  )}
+                  {(localThumb || form.thumb) && !uploading && (
+                    <View className="absolute bottom-2 right-2 bg-black/60 px-3 py-1.5 rounded-lg flex-row items-center">
+                      <Ionicons name="camera-outline" size={16} color="white" />
+                      <Text className="text-white text-xs ml-1 font-medium">
+                        Đổi ảnh
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+
+                <TextInput
+                  label="Tiêu đề *"
+                  value={form.title}
+                  onChangeText={(v) => setForm((p) => ({ ...p, title: v }))}
+                  mode="outlined"
+                  style={{ backgroundColor: "white", marginBottom: 16 }}
+                  outlineColor="#E5E7EB"
+                  activeOutlineColor="#111827"
+                  textColor="#111827"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+
+                <Text className="text-gray-700 text-sm font-medium mb-1">
+                  Nội dung chi tiết *
+                </Text>
+                <View className="border border-gray-200 rounded-xl overflow-hidden mb-4 bg-white min-h-[300px]">
+                  <RichToolbar
+                    editor={richText}
+                    actions={[
+                      actions.setBold,
+                      actions.setItalic,
+                      actions.setUnderline,
+                      actions.heading1,
+                      actions.heading2,
+                      actions.insertBulletsList,
+                      actions.insertOrderedList,
+                      actions.undo,
+                      actions.redo,
+                    ]}
+                    iconTint="#4B5563"
+                    selectedIconTint="#DC2626"
+                    style={{
+                      backgroundColor: "#F9FAFB",
+                      borderBottomWidth: 1,
+                      borderBottomColor: "#E5E7EB",
+                    }}
+                  />
+                  <ScrollView nestedScrollEnabled className="flex-1 bg-white">
+                    <RichEditor
+                      ref={richText}
+                      initialContentHTML={form.content}
+                      onChange={(html) =>
+                        setForm((p) => ({ ...p, content: html }))
+                      }
+                      placeholder="Nhập nội dung bài viết..."
+                      editorStyle={{
+                        backgroundColor: "white",
+                        color: "#111827",
+                        placeholderColor: "#9CA3AF",
+                        cssText:
+                          "font-family: sans-serif; font-size: 14px; padding: 8px;",
+                      }}
+                      containerStyle={{ flex: 1 }}
+                    />
+                  </ScrollView>
+                </View>
+
+                <TextInput
+                  label="Tags (cách nhau bằng dấu phẩy)"
+                  value={form.tags}
+                  onChangeText={(v) => setForm((p) => ({ ...p, tags: v }))}
+                  mode="outlined"
+                  style={{ backgroundColor: "white", marginBottom: 24 }}
+                  outlineColor="#E5E7EB"
+                  activeOutlineColor="#111827"
+                  textColor="#111827"
+                  placeholder="Ví dụ: công nghệ, bất động sản"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+
+                <PaperButton
+                  mode="contained"
+                  onPress={handleSave}
+                  loading={saving || uploading}
+                  disabled={
+                    saving || uploading || !form.title.trim() || !form.content.trim()
+                  }
+                  style={{ borderRadius: 12 }}
+                  contentStyle={{ height: 48 }}
+                  buttonColor="#111827"
+                  textColor="white"
+                  labelStyle={{ fontSize: 16, fontWeight: "bold" }}
+                >
+                  Lưu thông tin
+                </PaperButton>
+                <View className="h-10" />
+              </ScrollView>
             </View>
-          </ScrollView>
-        </Modal>
-      </Portal>
-    </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </SafeAreaView>
   );
 }
