@@ -6,9 +6,14 @@ import {
   RefreshControl,
   ActivityIndicator,
   Pressable,
+  TextInput as RNTextInput,
+  Modal,
+  Platform,
+  StatusBar,
+  ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, Modal, Portal, SegmentedButtons } from "react-native-paper";
 import { router } from "expo-router";
 import {
   getAllReportApi,
@@ -47,6 +52,7 @@ export default function AdminReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const { showSuccess, handleError } = useNotification();
 
   const [actionModal, setActionModal] = useState(false);
@@ -85,10 +91,14 @@ export default function AdminReportsScreen() {
     }
   };
 
-  const filtered =
-    statusFilter === "all"
-      ? reports
-      : reports.filter((r) => r.status === statusFilter);
+  const filtered = reports.filter((r) => {
+    const matchesStatus = statusFilter === "all" || r.status === statusFilter;
+    const matchesSearch =
+      search === "" ||
+      r.reason.toLowerCase().includes(search.toLowerCase()) ||
+      (r.content && r.content.toLowerCase().includes(search.toLowerCase()));
+    return matchesStatus && matchesSearch;
+  });
 
   const pendingCount = reports.filter((r) => r.status === "pending").length;
   const resolvedCount = reports.filter((r) => r.status === "resolved").length;
@@ -96,71 +106,98 @@ export default function AdminReportsScreen() {
 
   if (loading)
     return (
-      <View className="flex-1 items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-gray-50">
         <ActivityIndicator size="large" color="#DC2626" />
       </View>
     );
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Stats */}
-      <View className="px-4 pt-3 pb-2">
-        <View className="flex-row gap-2 mb-3">
-          {[
-            {
-              label: "Chờ xử lý",
-              count: pendingCount,
-              color: "#D97706",
-              bg: "#FFFBEB",
-            },
-            {
-              label: "Đã xử lý",
-              count: resolvedCount,
-              color: "#16A34A",
-              bg: "#F0FDF4",
-            },
-            {
-              label: "Từ chối",
-              count: rejectedCount,
-              color: "#DC2626",
-              bg: "#FEF2F2",
-            },
-          ].map((s) => (
-            <View
-              key={s.label}
-              className="flex-1 rounded-xl p-3 items-center"
-              style={{ backgroundColor: s.bg }}
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="px-4 pt-4 pb-2 z-10">
+        {/* Header */}
+        <View className="flex-row items-center justify-between mb-4 mt-2">
+          <View className="flex-row items-center">
+            <Pressable
+              onPress={() => router.back()}
+              className="mr-3 p-2 rounded-full bg-white border border-gray-100 shadow-sm"
             >
-              <Text className="text-2xl font-bold" style={{ color: s.color }}>
-                {s.count}
-              </Text>
-              <Text className="text-xs mt-0.5" style={{ color: s.color }}>
-                {s.label}
-              </Text>
+              <Ionicons name="arrow-back" size={20} color="#4B5563" />
+            </Pressable>
+            <View>
+              <Text className="text-gray-900 text-xl font-bold">Báo cáo</Text>
+              <Text className="text-gray-500 text-sm">Quản lý vi phạm</Text>
             </View>
-          ))}
+          </View>
         </View>
 
-        {/* Filter tabs */}
-        <View className="flex-row bg-white rounded-xl overflow-hidden">
-          {[
-            { value: "all", label: `Tất cả (${reports.length})` },
-            { value: "pending", label: `Chờ (${pendingCount})` },
-            { value: "resolved", label: `Xong (${resolvedCount})` },
-          ].map((tab) => (
+        {/* Search */}
+        <View className="flex-row items-center gap-2 mb-4">
+          <View className="flex-1 flex-row items-center bg-white border border-gray-200 rounded-xl px-3 h-11">
+            <Ionicons name="search" size={20} color="#9CA3AF" />
+            <RNTextInput
+              className="flex-1 ml-2 text-gray-900 text-sm h-full"
+              placeholder="Tìm theo lý do, nội dung..."
+              placeholderTextColor="#6B7280"
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")} className="p-1">
+                <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+              </Pressable>
+            )}
+          </View>
+        </View>
+
+        {/* Status Filter Chips */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+          <View className="flex-row gap-2 pr-4">
             <Pressable
-              key={tab.value}
-              onPress={() => setStatusFilter(tab.value)}
-              className={`flex-1 py-2.5 items-center ${statusFilter === tab.value ? "bg-red-500" : ""}`}
+              onPress={() => setStatusFilter("all")}
+              className={`px-4 py-2 rounded-full border ${
+                statusFilter === "all"
+                  ? "bg-gray-900 border-gray-900"
+                  : "bg-white border-gray-200"
+              }`}
             >
               <Text
-                className={`text-xs font-semibold ${statusFilter === tab.value ? "text-white" : "text-gray-500"}`}
+                className={`text-sm font-semibold ${
+                  statusFilter === "all" ? "text-white" : "text-gray-600"
+                }`}
               >
-                {tab.label}
+                Tất cả ({reports.length})
               </Text>
             </Pressable>
-          ))}
-        </View>
+            
+            {[
+              { id: "pending", label: `Chờ xử lý (${pendingCount})`, color: "#D97706", bg: "#FFFBEB" },
+              { id: "resolved", label: `Đã xử lý (${resolvedCount})`, color: "#16A34A", bg: "#F0FDF4" },
+              { id: "rejected", label: `Từ chối (${rejectedCount})`, color: "#DC2626", bg: "#FEF2F2" },
+            ].map((f) => (
+              <Pressable
+                key={f.id}
+                onPress={() => setStatusFilter(f.id)}
+                className={`px-4 py-2 rounded-full border flex-row items-center ${
+                  statusFilter === f.id
+                    ? "bg-gray-900 border-gray-900"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <View 
+                  className="w-2 h-2 rounded-full mr-2" 
+                  style={{ backgroundColor: statusFilter === f.id ? "white" : f.color }} 
+                />
+                <Text
+                  className={`text-sm font-semibold ${
+                    statusFilter === f.id ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  {f.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       </View>
 
       <FlatList
@@ -177,7 +214,7 @@ export default function AdminReportsScreen() {
         ListEmptyComponent={
           <View className="items-center mt-20">
             <Ionicons name="flag-outline" size={64} color="#D1D5DB" />
-            <Text className="text-gray-400 text-lg mt-4">Không có báo cáo</Text>
+            <Text className="text-gray-400 text-lg mt-4">Không có báo cáo nào</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -199,33 +236,33 @@ export default function AdminReportsScreen() {
                 setSelectedReport(item);
                 setActionModal(true);
               }}
-              className="bg-white rounded-xl p-4 mb-2.5 shadow-sm"
+              className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
             >
               {/* Header */}
-              <View className="flex-row items-start justify-between mb-2">
+              <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-1 mr-3">
                   <Pressable onPress={() => router.push(`/property/${postId}`)}>
                     <Text
                       className="font-bold text-gray-900 text-base"
-                      numberOfLines={1}
+                      numberOfLines={2}
                     >
                       {postTitle}
                     </Text>
                   </Pressable>
-                  <View className="flex-row items-center mt-1">
+                  <View className="flex-row items-center mt-1.5">
                     <Ionicons name="person-outline" size={12} color="#9CA3AF" />
                     <Text className="text-gray-500 text-xs ml-1">
-                      Báo cáo bởi: {authorName}
+                      Người báo cáo: {authorName}
                     </Text>
                   </View>
                 </View>
                 <View
-                  className="flex-row items-center px-2 py-1 rounded-full"
+                  className="flex-row items-center px-2.5 py-1 rounded-full border border-gray-100"
                   style={{ backgroundColor: st.bg }}
                 >
                   <Ionicons name={st.icon as any} size={12} color={st.color} />
                   <Text
-                    className="text-xs font-semibold ml-1"
+                    className="text-xs font-bold ml-1"
                     style={{ color: st.color }}
                   >
                     {st.label}
@@ -234,19 +271,19 @@ export default function AdminReportsScreen() {
               </View>
 
               {/* Reason */}
-              <View className="bg-gray-50 rounded-lg p-3 mb-2">
+              <View className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
                 <View className="flex-row items-center mb-1">
                   <Ionicons
-                    name="alert-circle-outline"
-                    size={14}
-                    color="#6B7280"
+                    name="alert-circle"
+                    size={16}
+                    color="#DC2626"
                   />
-                  <Text className="text-gray-700 font-medium text-sm ml-1">
+                  <Text className="text-gray-900 font-bold text-sm ml-1.5">
                     Lý do: {item.reason}
                   </Text>
                 </View>
                 {item.content && (
-                  <Text className="text-gray-500 text-sm" numberOfLines={2}>
+                  <Text className="text-gray-600 text-sm mt-1" numberOfLines={2}>
                     {item.content}
                   </Text>
                 )}
@@ -255,34 +292,54 @@ export default function AdminReportsScreen() {
               {/* Footer */}
               <View className="flex-row items-center justify-between">
                 {item.createdAt && (
-                  <Text className="text-gray-400 text-xs">
-                    {formatTimeAgo(item.createdAt)}
-                  </Text>
+                  <View className="flex-row items-center">
+                    <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                    <Text className="text-gray-400 text-xs ml-1">
+                      {formatTimeAgo(item.createdAt)}
+                    </Text>
+                  </View>
                 )}
-                {item.status === "pending" && (
+                {item.status === "pending" ? (
                   <View className="flex-row gap-2">
                     <Pressable
-                      onPress={() => handleUpdateStatus("resolved")}
-                      className="bg-green-50 px-2.5 py-1 rounded-lg flex-row items-center"
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setSelectedReport(item);
+                        handleUpdateStatus("resolved");
+                      }}
+                      className="bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg flex-row items-center"
                     >
                       <Ionicons name="checkmark" size={14} color="#16A34A" />
-                      <Text className="text-green-600 text-xs ml-1 font-medium">
-                        Xử lý
+                      <Text className="text-green-600 text-xs ml-1 font-bold">
+                        Đã xử lý
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => {
+                      onPress={(e) => {
+                        e.stopPropagation();
                         setSelectedReport(item);
                         handleUpdateStatus("rejected");
                       }}
-                      className="bg-red-50 px-2.5 py-1 rounded-lg flex-row items-center"
+                      className="bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg flex-row items-center"
                     >
                       <Ionicons name="close" size={14} color="#DC2626" />
-                      <Text className="text-red-600 text-xs ml-1 font-medium">
+                      <Text className="text-red-600 text-xs ml-1 font-bold">
                         Từ chối
                       </Text>
                     </Pressable>
                   </View>
+                ) : (
+                  <Pressable
+                    onPress={() => {
+                      setSelectedReport(item);
+                      setActionModal(true);
+                    }}
+                    className="bg-gray-100 px-3 py-1.5 rounded-lg flex-row items-center"
+                  >
+                    <Text className="text-gray-600 text-xs font-semibold">
+                      Xem chi tiết
+                    </Text>
+                  </Pressable>
                 )}
               </View>
             </Pressable>
@@ -290,69 +347,96 @@ export default function AdminReportsScreen() {
         }}
       />
 
-      {/* Detail Modal */}
-      <Portal>
-        <Modal
-          visible={actionModal}
-          onDismiss={() => setActionModal(false)}
-          contentContainerStyle={{
-            backgroundColor: "white",
-            margin: 20,
-            borderRadius: 16,
-            padding: 20,
-          }}
-        >
-          {selectedReport && (
-            <>
-              <Text className="text-lg font-bold text-gray-900 mb-2">
-                Chi tiết báo cáo
-              </Text>
-              <View className="bg-gray-50 rounded-lg p-3 mb-3">
-                <Text className="text-gray-700 font-medium mb-1">
-                  Lý do: {selectedReport.reason}
-                </Text>
-                {selectedReport.content && (
-                  <Text className="text-gray-500 text-sm">
-                    {selectedReport.content}
-                  </Text>
-                )}
-              </View>
-              <Text className="text-gray-500 text-sm mb-4">
-                Trạng thái hiện tại:{" "}
-                {STATUS_CONFIG[selectedReport.status]?.label}
-              </Text>
-              <Button
-                mode="contained"
-                onPress={() => handleUpdateStatus("resolved")}
-                buttonColor="#16A34A"
-                className="mb-2"
-                contentStyle={{ paddingVertical: 4 }}
-                icon="check-circle"
-              >
-                Đã xử lý
-              </Button>
-              <Button
-                mode="contained"
-                onPress={() => handleUpdateStatus("rejected")}
-                buttonColor="#DC2626"
-                className="mb-2"
-                contentStyle={{ paddingVertical: 4 }}
-                icon="close-circle"
-              >
-                Từ chối
-              </Button>
-              <Button
-                mode="outlined"
+      {/* Detail Modal (Bottom Sheet style) */}
+      <Modal
+        visible={actionModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setActionModal(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl min-h-[60%] max-h-[90%] pb-8">
+            <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-900">Chi tiết báo cáo</Text>
+              <Pressable
                 onPress={() => setActionModal(false)}
-                className="mt-1"
-                textColor="#6B7280"
+                className="p-1.5 bg-gray-100 rounded-full"
               >
-                Đóng
-              </Button>
-            </>
-          )}
-        </Modal>
-      </Portal>
-    </View>
+                <Ionicons name="close" size={20} color="#4B5563" />
+              </Pressable>
+            </View>
+
+            {selectedReport && (
+              <ScrollView className="p-5" showsVerticalScrollIndicator={false}>
+                <View className="bg-red-50 rounded-xl p-4 mb-4 border border-red-100">
+                  <View className="flex-row items-center mb-2">
+                    <Ionicons name="warning" size={20} color="#DC2626" />
+                    <Text className="text-red-700 font-bold text-base ml-2">
+                      Lý do: {selectedReport.reason}
+                    </Text>
+                  </View>
+                  {selectedReport.content && (
+                    <Text className="text-gray-700 text-sm mt-1 leading-5">
+                      {selectedReport.content}
+                    </Text>
+                  )}
+                </View>
+
+                <View className="mb-6">
+                  <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+                    <Text className="text-gray-500 font-medium">Trạng thái hiện tại</Text>
+                    <View
+                      className="flex-row items-center px-3 py-1 rounded-full border border-gray-100"
+                      style={{ backgroundColor: STATUS_CONFIG[selectedReport.status]?.bg || "#FFFBEB" }}
+                    >
+                      <Ionicons name={STATUS_CONFIG[selectedReport.status]?.icon as any || "time-outline"} size={14} color={STATUS_CONFIG[selectedReport.status]?.color || "#D97706"} />
+                      <Text
+                        className="text-sm font-bold ml-1.5"
+                        style={{ color: STATUS_CONFIG[selectedReport.status]?.color || "#D97706" }}
+                      >
+                        {STATUS_CONFIG[selectedReport.status]?.label || "Chờ xử lý"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+                    <Text className="text-gray-500 font-medium">Người báo cáo</Text>
+                    <Text className="text-gray-900 font-semibold">
+                      {typeof selectedReport.author === "object"
+                        ? (selectedReport.author as User).userName
+                        : "Khách"}
+                    </Text>
+                  </View>
+                  <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+                    <Text className="text-gray-500 font-medium">Thời gian gửi</Text>
+                    <Text className="text-gray-900 font-semibold">
+                      {selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleDateString('vi-VN') : "N/A"}
+                    </Text>
+                  </View>
+                </View>
+
+                {selectedReport.status === "pending" && (
+                  <View className="gap-3">
+                    <Pressable
+                      onPress={() => handleUpdateStatus("resolved")}
+                      className="bg-green-600 py-3.5 rounded-xl flex-row items-center justify-center shadow-sm"
+                    >
+                      <Ionicons name="checkmark-circle" size={20} color="white" />
+                      <Text className="text-white text-base font-bold ml-2">Đánh dấu Đã xử lý</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleUpdateStatus("rejected")}
+                      className="bg-red-50 border border-red-200 py-3.5 rounded-xl flex-row items-center justify-center"
+                    >
+                      <Ionicons name="close-circle" size={20} color="#DC2626" />
+                      <Text className="text-red-600 text-base font-bold ml-2">Từ chối báo cáo</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
