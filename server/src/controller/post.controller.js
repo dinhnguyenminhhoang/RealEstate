@@ -29,6 +29,19 @@ class PostController {
       }),
     }).send(res);
   };
+  getAllPostByAdmin = async (req, res, next) => {
+    const { page, limit, sort, ...query } = req.query;
+    new SuccessResponse({
+      data: await PostService.getAllPostByAdmin({
+        page,
+        limit,
+        filters: {},
+        options: {},
+        sort,
+        ...query,
+      }),
+    }).send(res);
+  };
   getPostDetail = async (req, res, next) => {
     const { id } = req.params;
     const { userId } = req.query;

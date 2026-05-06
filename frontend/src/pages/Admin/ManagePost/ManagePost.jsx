@@ -24,7 +24,7 @@ import React, { useEffect, useState } from "react";
 import {
   confirmPostApi,
   deletePostApi,
-  getAllPostAPi,
+  getAllPostByAdminAPi,
 } from "../../../services/postService";
 import { BASEIMAGE, formatCurrencyVND } from "../../../utils";
 import useNotification from "../../../hooks/useNotification";
@@ -47,7 +47,7 @@ const ManagerPost = () => {
   const fetchData = async (page = 1, limit = 10) => {
     setLoading(true);
     try {
-      const res = await getAllPostAPi({ page, limit });
+      const res = await getAllPostByAdminAPi({ page, limit });
       if (res.status === 200) {
         setListPosts(res.data.data);
         setPagi({

@@ -47,7 +47,7 @@ class PostService {
       options,
       ...query
     },
-    user
+    user,
   ) => {
     if (!user) {
       throw new AuthFailureError("can't not find user");
@@ -124,6 +124,80 @@ class PostService {
 
     filters = { ...filters, ...query };
     console.log("filters", filters);
+    let posts = await paginate({
+      model: Post,
+      limit: +limit,
+      page: +page,
+      filters,
+      options,
+      sort,
+      projection: unGetSelectData(["isDelete", "__v"]),
+      populate: {
+        path: "author",
+        select: "userName email phone address _id",
+      },
+    });
+
+    return posts;
+  };
+
+  static getAllPostByAdmin = async ({
+    page = 1,
+    limit = 10,
+    filters = {},
+    options = {},
+    sort,
+    ...query
+  }) => {
+    filters = { ...filters, isDelete: "active" };
+    if (sort) {
+      const sortObj = {};
+      const sortSplit = sort.split("-");
+      if (sortSplit.length === 2) {
+        const [key, value] = sortSplit;
+        if (value === "default") {
+          sort = null;
+        } else {
+          sortObj[key] = value === "desc" ? -1 : 1;
+          sort = sortObj;
+        }
+      }
+    }
+    if (query) {
+      query = removeUndefinedObject(query);
+    }
+    if (query.area) {
+      const areaRange = query.area.split("-");
+      if (areaRange.length === 2) {
+        const [minArea, maxArea] = areaRange;
+        filters.acreage = {
+          $gte: parseInt(minArea),
+          $lte: parseInt(maxArea),
+        };
+      }
+      delete query.area;
+    }
+    if (query.price) {
+      const priceRange = query.price.split("-");
+      if (priceRange.length === 2) {
+        const [minPrice, maxPrice] = priceRange;
+        filters.price = {
+          $gte: parseInt(minPrice * 1000000000),
+          $lte: parseInt(maxPrice * 1000000000),
+        };
+      }
+      delete query.price;
+    }
+    if (query.address) {
+      filters.address = { $regex: query.address, $options: "i" };
+      delete query.address;
+    }
+    if (query.type) {
+      filters.type = query.type;
+      delete query.type;
+    }
+
+    filters = { ...filters, ...query };
     let posts = await paginate({
       model: Post,
       limit: +limit,
@@ -225,7 +299,7 @@ class PostService {
     const result = await Post.findOneAndUpdate(
       { _id: id },
       { $inc: { views: 1 } },
-      { new: true }
+      { new: true },
     );
 
     return result;
@@ -242,7 +316,7 @@ class PostService {
       { verification: !isExist.verification },
       {
         new: true,
-      }
+      },
     );
     return result;
   };
@@ -258,7 +332,7 @@ class PostService {
       { verification: false },
       {
         new: true,
-      }
+      },
     );
     return result;
   };
@@ -274,7 +348,7 @@ class PostService {
       { isDelete: "inActive" },
       {
         new: true,
-      }
+      },
     );
     return result;
   };
@@ -290,7 +364,7 @@ class PostService {
       { isDelete: "inActive" },
       {
         new: true,
-      }
+      },
     );
     return result;
   };

@@ -27,6 +27,10 @@ export const userCreatePostApi = (data: any) => {
   return instance.post("/user-post", data);
 };
 
+export const getAllPostByAdminApi = async (params: any) => {
+  return await instance.get("/admin-post", { params });
+};
+
 export const userGetAllPostApi = (params?: any) => {
   return instance.get("/user-post", { params });
 };

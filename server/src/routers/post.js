@@ -31,6 +31,11 @@ router.delete(
   asynchandler(postController.userDeleteYourPost)
 );
 router.get("/post", postController.getAllPost);
+router.get(
+  "/admin-post",
+  adminAuthentication,
+  asynchandler(postController.getAllPostByAdmin)
+);
 router.put("/post/:id/view", postController.updatePostView);
 router.get("/post/:id", postController.getPostDetail);
 router.get("/post-outstanding", postController.getPostOutstanding);

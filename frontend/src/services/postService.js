@@ -15,6 +15,14 @@ const getAllPostAPi = ({ page = 1, limit = 6, filters = {} }) => {
   }).toString();
   return instance.get(`/post?${queryParams}`);
 };
+const getAllPostByAdminAPi = ({ page = 1, limit = 6, filters = {} }) => {
+  const queryParams = new URLSearchParams({
+    page,
+    limit,
+    ...filters,
+  }).toString();
+  return instance.get(`/admin-post?${queryParams}`);
+};
 const updateViewApi = (id) => {
   return instance.put(`/post/${id}/view`);
 };
@@ -63,4 +71,5 @@ export {
   getPostDetailAPi,
   updateViewApi,
   unPublishPostApi,
+  getAllPostByAdminAPi,
 };

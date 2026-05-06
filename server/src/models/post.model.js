@@ -75,7 +75,7 @@ const postSchema = new Schema(
       default: "active",
     },
   },
-  { timestamps: true, collection: COLLECTION_NAME }
+  { timestamps: true, collection: COLLECTION_NAME },
 );
 module.exports = {
   Post: model(DOCUMENT_NAME, postSchema),
