@@ -7,9 +7,18 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+  TextInput as RNTextInput,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, Modal, Portal, TextInput } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
+import { router } from "expo-router";
 import {
   getAllCategoryApi,
   createCategoryApi,
@@ -23,12 +32,13 @@ export default function AdminCategoriesScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { showSuccess, handleError } = useNotification();
+  const { showSuccess, showError, handleError } = useNotification();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -64,7 +74,10 @@ export default function AdminCategoriesScreen() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      showError("Vui lòng nhập tên danh mục");
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
@@ -102,6 +115,15 @@ export default function AdminCategoriesScreen() {
     ]);
   };
 
+  const filtered = search
+    ? categories.filter(
+        (cat) =>
+          cat.name.toLowerCase().includes(search.toLowerCase()) ||
+          (cat.description &&
+            cat.description.toLowerCase().includes(search.toLowerCase())),
+      )
+    : categories;
+
   if (loading)
     return (
       <View className="flex-1 items-center justify-center">
@@ -110,25 +132,51 @@ export default function AdminCategoriesScreen() {
     );
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="px-4 pt-3 pb-2 flex-row items-center justify-between">
-        <Text className="text-gray-500 text-sm">
-          {categories.length} danh mục
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="px-4 pt-4 pb-2">
+        <View className="flex-row items-center mb-4 mt-2">
+          <Pressable
+            onPress={() => router.back()}
+            className="mr-3 p-2 rounded-full bg-white border border-gray-100 shadow-sm"
+          >
+            <Ionicons name="arrow-back" size={20} color="#4B5563" />
+          </Pressable>
+          <View>
+            <Text className="text-gray-900 text-xl font-bold">Danh mục</Text>
+            <Text className="text-gray-500 text-sm">Quản lý thể loại BĐS</Text>
+          </View>
+        </View>
+
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1 flex-row items-center bg-white border border-gray-200 rounded-xl px-3 h-11">
+            <Ionicons name="search" size={20} color="#9CA3AF" />
+            <RNTextInput
+              className="flex-1 ml-2 text-gray-900 text-sm h-full"
+              placeholder="Tìm theo tên..."
+              placeholderTextColor="#6B7280"
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")} className="p-1">
+                <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+              </Pressable>
+            )}
+          </View>
+          <Pressable
+            onPress={openCreate}
+            className="bg-gray-900 h-11 w-11 rounded-xl items-center justify-center shadow-sm"
+          >
+            <Ionicons name="add" size={24} color="white" />
+          </Pressable>
+        </View>
+        <Text className="text-gray-400 text-xs mt-2">
+          Tổng: {categories.length} danh mục
         </Text>
-        <Pressable
-          onPress={openCreate}
-          className="bg-red-500 px-3.5 py-2 rounded-lg flex-row items-center"
-        >
-          <Ionicons name="add" size={18} color="white" />
-          <Text className="text-white text-sm font-semibold ml-1">
-            Thêm mới
-          </Text>
-        </Pressable>
       </View>
 
       <FlatList
-        data={categories}
+        data={filtered}
         keyExtractor={(item) => item._id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         refreshControl={
@@ -195,64 +243,125 @@ export default function AdminCategoriesScreen() {
         )}
       />
 
-      {/* Modal */}
-      <Portal>
-        <Modal
-          visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
-          contentContainerStyle={{
-            backgroundColor: "white",
-            margin: 20,
-            borderRadius: 16,
-            padding: 20,
-          }}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
         >
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            {editing ? "Sửa danh mục" : "Thêm danh mục mới"}
-          </Text>
-          <TextInput
-            label="Tên danh mục *"
-            value={form.name}
-            onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-            mode="outlined"
-            className="mb-3 bg-white"
-            outlineColor="#D1D5DB"
-            activeOutlineColor="#DC2626"
-          />
-          <TextInput
-            label="Mô tả"
-            value={form.description}
-            onChangeText={(v) => setForm((p) => ({ ...p, description: v }))}
-            mode="outlined"
-            multiline
-            numberOfLines={3}
-            className="mb-4 bg-white"
-            outlineColor="#D1D5DB"
-            activeOutlineColor="#DC2626"
-          />
-          <View className="flex-row gap-3">
-            <Button
-              mode="outlined"
-              onPress={() => setModalVisible(false)}
-              className="flex-1"
-              textColor="#6B7280"
-              style={{ borderColor: "#D1D5DB" }}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                justifyContent: "center",
+              }}
             >
-              Hủy
-            </Button>
-            <Button
-              mode="contained"
-              onPress={handleSave}
-              loading={saving}
-              disabled={saving || !form.name.trim()}
-              buttonColor="#DC2626"
-              className="flex-1"
-            >
-              Lưu
-            </Button>
-          </View>
-        </Modal>
-      </Portal>
-    </View>
+              <View
+                style={{
+                  backgroundColor: "white",
+                  marginHorizontal: 16,
+                  borderRadius: 16,
+                  maxHeight: "85%",
+                }}
+              >
+                {/* Header */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingHorizontal: 20,
+                    paddingTop: 20,
+                    paddingBottom: 12,
+                  }}
+                >
+                  <Text className="text-lg font-bold text-gray-900">
+                    {editing ? "Sửa danh mục" : "Thêm danh mục mới"}
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setModalVisible(false);
+                    }}
+                    className="p-1"
+                  >
+                    <Ionicons name="close" size={24} color="#6B7280" />
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingBottom: 20,
+                  }}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <TextInput
+                    label="Tên danh mục *"
+                    value={form.name}
+                    onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+                    mode="outlined"
+                    style={{ backgroundColor: "#FFFFFF", marginBottom: 12 }}
+                    outlineColor="#D1D5DB"
+                    activeOutlineColor="#111827"
+                    textColor="#111827"
+                    multiline={false}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    left={<TextInput.Icon icon="folder-outline" />}
+                  />
+                  <TextInput
+                    label="Mô tả"
+                    value={form.description}
+                    onChangeText={(v) =>
+                      setForm((p) => ({ ...p, description: v }))
+                    }
+                    mode="outlined"
+                    multiline
+                    numberOfLines={3}
+                    style={{ backgroundColor: "#FFFFFF", marginBottom: 16 }}
+                    outlineColor="#D1D5DB"
+                    activeOutlineColor="#111827"
+                    textColor="#111827"
+                    left={<TextInput.Icon icon="text-box-outline" />}
+                  />
+                  <View className="flex-row gap-3 justify-end mt-2">
+                    <Button
+                      mode="outlined"
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setModalVisible(false);
+                      }}
+                      textColor="#DC2626"
+                      style={{ borderColor: "#DC2626" }}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      mode="contained"
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        handleSave();
+                      }}
+                      loading={saving}
+                      disabled={saving}
+                      buttonColor="#2563EB"
+                    >
+                      Lưu
+                    </Button>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+    </SafeAreaView>
   );
 }
