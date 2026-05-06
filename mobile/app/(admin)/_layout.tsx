@@ -21,11 +21,11 @@ export default function AdminLayout() {
       }}
     >
       <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-      <Stack.Screen name="users" options={{ title: "Quản lý người dùng" }} />
-      <Stack.Screen name="categories" options={{ title: "Quản lý danh mục" }} />
-      <Stack.Screen name="posts" options={{ title: "Quản lý bài đăng" }} />
-      <Stack.Screen name="news" options={{ title: "Quản lý tin tức" }} />
-      <Stack.Screen name="reports" options={{ title: "Quản lý báo cáo" }} />
+      <Stack.Screen name="users" options={{ headerShown: false }} />
+      <Stack.Screen name="categories" options={{ headerShown: false }} />
+      <Stack.Screen name="posts" options={{ headerShown: false }} />
+      <Stack.Screen name="news" options={{ headerShown: false }} />
+      <Stack.Screen name="reports" options={{ headerShown: false }} />
     </Stack>
   );
 }
