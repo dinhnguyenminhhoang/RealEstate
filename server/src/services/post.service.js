@@ -77,7 +77,6 @@ class PostService {
     if (sort) {
       const sortObj = {};
       const sortSplit = sort.split("-");
-      console.log("sortSplit", sortSplit);
       if (sortSplit.length === 2) {
         const [key, value] = sortSplit;
         if (value === "default") {
@@ -96,22 +95,24 @@ class PostService {
       if (areaRange.length === 2) {
         const [minArea, maxArea] = areaRange;
         filters.acreage = {
-          $gte: parseInt(minArea),
-          $lte: parseInt(maxArea),
+          $gte: parseFloat(minArea),
+          $lte: parseFloat(maxArea),
         };
       }
       delete query.area;
     }
-    if (query.price) {
-      const priceRange = query.price.split("-");
+    const priceFilter = query.price || query.priceRange;
+    if (priceFilter) {
+      const priceRange = priceFilter.split("-");
       if (priceRange.length === 2) {
         const [minPrice, maxPrice] = priceRange;
         filters.price = {
-          $gte: parseInt(minPrice * 1000000000),
-          $lte: parseInt(maxPrice * 1000000000),
+          $gte: parseFloat(minPrice) * 1000000000,
+          $lte: parseFloat(maxPrice) * 1000000000,
         };
       }
       delete query.price;
+      delete query.priceRange;
     }
     if (query.address) {
       filters.address = { $regex: query.address, $options: "i" };
@@ -123,7 +124,6 @@ class PostService {
     }
 
     filters = { ...filters, ...query };
-    console.log("filters", filters);
     let posts = await paginate({
       model: Post,
       limit: +limit,
