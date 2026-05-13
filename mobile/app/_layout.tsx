@@ -63,7 +63,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="property/[id]"
               options={{
-                headerShown: true,
+                headerShown: false,
                 title: "Chi tiết bài đăng",
                 headerBackTitle: "Quay lại",
               }}
@@ -71,7 +71,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="news/[id]"
               options={{
-                headerShown: true,
+                headerShown: false,
                 title: "Chi tiết tin tức",
                 headerBackTitle: "Quay lại",
               }}

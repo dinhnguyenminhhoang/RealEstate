@@ -5,7 +5,7 @@ export const priceRanges = [
   { value: "3-5", label: "3 - 5 tỷ" },
   { value: "5-10", label: "5 - 10 tỷ" },
   { value: "10-20", label: "10 - 20 tỷ" },
-  { value: "20-50", label: "Trên 20 tỷ" },
+  { value: "20-100000", label: "Trên 20 tỷ" },
 ];
 
 // Area ranges
@@ -15,7 +15,7 @@ export const areaRanges = [
   { value: "50-80", label: "50 - 80 m²" },
   { value: "80-100", label: "80 - 100 m²" },
   { value: "100-150", label: "100 - 150 m²" },
-  { value: "150-500", label: "Trên 150 m²" },
+  { value: "150-100000", label: "Trên 150 m²" },
 ];
 
 export const tagOptions = [

@@ -132,10 +132,16 @@ class PostService {
       options,
       sort,
       projection: unGetSelectData(["isDelete", "__v"]),
-      populate: {
-        path: "author",
-        select: "userName email phone address _id",
-      },
+      populate: [
+        {
+          path: "author",
+          select: "userName email phone address _id",
+        },
+        {
+          path: "category",
+          select: "name _id",
+        },
+      ],
     });
 
     return posts;
@@ -230,7 +236,7 @@ class PostService {
           select: "name _id",
         },
       ])
-      .select(unGetSelectData(["__v", "isDelete", "verification"]));
+      .select(unGetSelectData(["__v", "isDelete"]));
 
     if (!post) {
       throw new NotFoundError("Post not found or has been deleted");

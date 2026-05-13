@@ -1,6 +1,6 @@
 "use strict";
 
-const { NotFoundError } = require("../core/error.response");
+const { badRequestError, NotFoundError } = require("../core/error.response");
 const sendEmail = require("../helpers/sendEmail");
 const { Application } = require("../models/application.modal");
 const { applicationEmailForm } = require("../utils/emailExtension");
@@ -8,15 +8,20 @@ const { paginate } = require("../utils/paginate");
 
 class ApplicationService {
   static createNewApplication = async (data, user) => {
-    const { post, content, phone, email, fullName } = data;
+    const { post, content, phone, email, fullName, name } = data;
+    const contactName = fullName || name;
+
     if (!user) throw new NotFoundError("User not found");
     if (!post) throw new NotFoundError("Post not found");
+    if (!contactName || !phone || !email) {
+      throw new badRequestError("Vui lòng nhập đầy đủ thông tin liên hệ");
+    }
 
     const newApplication = await Application.create({
-      name: fullName,
+      name: contactName,
       phone,
       email,
-      content,
+      content: content || "Tôi quan tâm đến bài đăng này. Vui lòng liên hệ lại.",
       post,
       author: user.userId,
     });
