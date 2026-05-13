@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://192.168.1.5:3055/v1/api";
+export const API_BASE_URL = "http://192.168.1.29:3055/v1/api";
 
 export const APP_NAME = "BĐS Online";
 export const APP_VERSION = "1.0.0";

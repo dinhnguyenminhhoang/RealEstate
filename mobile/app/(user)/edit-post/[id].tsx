@@ -199,7 +199,7 @@ export default function EditPostScreen() {
       <Stack.Screen 
         options={{ 
           headerLeft: () => (
-            <Pressable onPress={() => router.back()} className="mr-3 p-1">
+            <Pressable onPress={() => router.back()} className="mr-4 py-2">
               <Ionicons name="arrow-back" size={24} color="#111827" />
             </Pressable>
           ) 
@@ -232,7 +232,7 @@ export default function EditPostScreen() {
             <Pressable
               key={opt.value}
               onPress={() => updateField("type", opt.value)}
-              className={`flex-1 py-3.5 rounded-xl mr-2 border ${form.type === opt.value ? "bg-red-50 border-red-500" : "bg-white border-gray-200"}`}
+              className={`flex-1 h-[50px] justify-center rounded-xl mr-2 border ${form.type === opt.value ? "bg-red-50 border-red-500" : "bg-white border-gray-200"}`}
             >
               <Text className={`text-center font-semibold ${form.type === opt.value ? "text-red-600" : "text-gray-600"}`}>
                 {opt.label}
@@ -248,7 +248,7 @@ export default function EditPostScreen() {
             onChangeText={(v) => updateField("title", v)}
             placeholder="Nhập tiêu đề..."
             placeholderTextColor="#9CA3AF"
-            className="border border-gray-300 rounded-xl px-4 py-3.5 bg-white text-gray-900 text-base"
+            className="border border-gray-300 rounded-xl px-4 h-[50px] bg-white text-gray-900 text-base"
           />
         </View>
 
@@ -257,7 +257,7 @@ export default function EditPostScreen() {
           <Text className="font-medium text-gray-700 mb-2">Tỉnh/Thành, Quận/Huyện, Xã/Phường <Text className="text-red-500">*</Text></Text>
           <Pressable
             onPress={() => setLocationModalVisible(true)}
-            className="border border-gray-300 rounded-xl px-4 py-3.5 flex-row items-center justify-between bg-white"
+            className="border border-gray-300 rounded-xl px-4 h-[50px] flex-row items-center justify-between bg-white"
           >
             <Text className={`text-base flex-1 ${province ? "text-gray-900" : "text-gray-400"}`} numberOfLines={1}>
               {province ? `${province} - ${district} - ${ward}` : "Chọn khu vực..."}
@@ -273,7 +273,7 @@ export default function EditPostScreen() {
             onChangeText={(v) => updateField("detailAddress", v)}
             placeholder="Số nhà, tên đường..."
             placeholderTextColor="#9CA3AF"
-            className="border border-gray-300 rounded-xl px-4 py-3.5 bg-white text-gray-900 text-base"
+            className="border border-gray-300 rounded-xl px-4 h-[50px] bg-white text-gray-900 text-base"
           />
         </View>
 
@@ -281,7 +281,7 @@ export default function EditPostScreen() {
           <Text className="font-medium text-gray-700 mb-2">Loại bất động sản <Text className="text-red-500">*</Text></Text>
           <Pressable
             onPress={() => setCatModalVisible(true)}
-            className="border border-gray-300 rounded-xl px-4 py-3.5 flex-row items-center justify-between bg-white"
+            className="border border-gray-300 rounded-xl px-4 h-[50px] flex-row items-center justify-between bg-white"
           >
             <Text className={`text-base ${catName ? "text-gray-900" : "text-gray-400"}`}>
               {catName || "Chọn loại bất động sản..."}
@@ -299,7 +299,7 @@ export default function EditPostScreen() {
               placeholder="Ví dụ: 1000000"
               placeholderTextColor="#9CA3AF"
               keyboardType="numeric"
-              className="border border-gray-300 rounded-xl px-4 py-3.5 bg-white text-gray-900 text-base"
+              className="border border-gray-300 rounded-xl px-4 h-[50px] bg-white text-gray-900 text-base"
             />
           </View>
           <View className="flex-1 ml-2">
@@ -310,7 +310,7 @@ export default function EditPostScreen() {
               placeholder="Ví dụ: 50"
               placeholderTextColor="#9CA3AF"
               keyboardType="numeric"
-              className="border border-gray-300 rounded-xl px-4 py-3.5 bg-white text-gray-900 text-base"
+              className="border border-gray-300 rounded-xl px-4 h-[50px] bg-white text-gray-900 text-base"
             />
           </View>
         </View>

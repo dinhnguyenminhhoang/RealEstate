@@ -13,10 +13,18 @@ export const forgotPasswordApi = (data: { email: string }) => {
   return instance.post("/forgot-password", data);
 };
 
-export const resetPasswordApi = (data: { password: string }) => {
+export const resetPasswordApi = (data: {
+  email?: string;
+  code?: string;
+  password: string;
+}) => {
   return instance.post("/reset-password", data);
 };
 
-export const confirmAccountApi = () => {
-  return instance.post("/confirm-account");
+export const verifyOtpApi = (data: { email: string; code: string }) => {
+  return instance.post("/verify-otp", data);
+};
+
+export const resendOtpApi = (data: { email: string }) => {
+  return instance.post("/resend-otp", data);
 };

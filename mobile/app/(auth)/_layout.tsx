@@ -10,14 +10,21 @@ export default function AuthLayout() {
     >
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="sign-up" />
-      <Stack.Screen name="forgot-password" options={{ headerShown: true, title: "Quên mật khẩu" }} />
       <Stack.Screen
-        name="confirm-account/[token]"
-        options={{ headerShown: true, title: "Xác thực tài khoản" }}
+        name="forgot-password"
+        options={{ headerShown: false, title: "Quên mật khẩu" }}
+      />
+      <Stack.Screen
+        name="confirm-account"
+        options={{ headerShown: false, title: "Xác thực tài khoản" }}
+      />
+      <Stack.Screen
+        name="reset-password"
+        options={{ headerShown: false, title: "Đặt lại mật khẩu" }}
       />
       <Stack.Screen
         name="reset-password/[token]"
-        options={{ headerShown: true, title: "Đặt lại mật khẩu" }}
+        options={{ headerShown: false, title: "Đặt lại mật khẩu" }}
       />
     </Stack>
   );

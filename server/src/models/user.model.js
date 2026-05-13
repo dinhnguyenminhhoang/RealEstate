@@ -39,6 +39,22 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    verificationCode: {
+      type: String,
+      default: null,
+    },
+    verificationCodeExpiry: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordCode: {
+      type: String,
+      default: null,
+    },
+    resetPasswordCodeExpiry: {
+      type: Date,
+      default: null,
+    },
     roles: {
       type: [String],
       enum: ["ADMIN", "PARTNER", "USER"],

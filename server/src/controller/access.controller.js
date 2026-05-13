@@ -21,16 +21,22 @@ class AccessController {
       data: await AccessService.forgotPassword(req.body),
     }).send(res);
   };
-  confirmAccount = async (req, res, next) => {
+  verifyOtp = async (req, res, next) => {
     new SuccessResponse({
       message: "OK!",
-      data: await AccessService.confirmAccount(req.user, req.keyStore),
+      data: await AccessService.verifyOtp(req.body),
+    }).send(res);
+  };
+  resendOtp = async (req, res, next) => {
+    new SuccessResponse({
+      message: "OK!",
+      data: await AccessService.resendOtp(req.body),
     }).send(res);
   };
   resetPassword = async (req, res, next) => {
     new SuccessResponse({
       message: "OK!",
-      data: await AccessService.resetPassword(req.body, req.user, req.keyStore),
+      data: await AccessService.resetPassword(req.body),
     }).send(res);
   };
   logout = async (req, res, next) => {

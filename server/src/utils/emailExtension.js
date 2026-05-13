@@ -87,7 +87,7 @@ const cancelOrderForm = (orderId, order) => {
       `,
   };
 };
-const resetPasswordForm = (resetLink) => {
+const resetPasswordForm = (otpCode) => {
   return {
     title: "Đặt lại mật khẩu của bạn",
     body: `
@@ -99,15 +99,13 @@ const resetPasswordForm = (resetLink) => {
           <div style="padding: 20px;">
             <p>Xin chào,</p>
             <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Nếu bạn không yêu cầu thao tác này, vui lòng bỏ qua email này.</p>
-            <p>Nếu bạn muốn đặt lại mật khẩu, hãy nhấn vào nút bên dưới:</p>
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="${resetLink}" 
-                style="display: inline-block; padding: 12px 20px; font-size: 16px; color: #ffffff; background-color: #007bff; text-decoration: none; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">
-                Đặt lại mật khẩu
-              </a>
+            <p>Vui lòng nhập mã xác thực bên dưới vào ứng dụng để đặt lại mật khẩu:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="display: inline-block; padding: 16px 40px; font-size: 36px; font-weight: bold; letter-spacing: 12px; color: #007bff; background-color: #eef6ff; border: 2px dashed #007bff; border-radius: 8px;">
+                ${otpCode}
+              </div>
             </div>
-            <p>Nếu nút trên không hoạt động, bạn cũng có thể sao chép và dán liên kết dưới đây vào trình duyệt của mình:</p>
-            <p><a href="${resetLink}" style="color: #007bff; word-break: break-word;">${resetLink}</a></p>
+            <p style="text-align: center; color: #888; font-size: 14px;">Mã đặt lại mật khẩu có hiệu lực trong <strong>10 phút</strong>.</p>
             <p>Trân trọng,<br/>Đội ngũ hỗ trợ</p>
           </div>
           <div style="background-color: #f1f1f1; text-align: center; padding: 10px; font-size: 12px; color: #666;">
@@ -118,7 +116,7 @@ const resetPasswordForm = (resetLink) => {
       `,
   };
 };
-const confirmAccountForm = (confirmLink) => {
+const confirmAccountForm = (otpCode) => {
   return {
     title: "Xác nhận tài khoản của bạn",
     body: `
@@ -129,15 +127,14 @@ const confirmAccountForm = (confirmLink) => {
           </div>
           <div style="padding: 20px;">
             <p>Xin chào,</p>
-            <p>Chúng tôi rất vui khi bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất quá trình đăng ký, vui lòng xác nhận tài khoản của bạn bằng cách nhấn vào nút bên dưới:</p>
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="${confirmLink}" 
-                style="display: inline-block; padding: 12px 20px; font-size: 16px; color: #ffffff; background-color: #28a745; text-decoration: none; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">
-                Xác nhận tài khoản
-              </a>
+            <p>Chúng tôi rất vui khi bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất quá trình đăng ký, vui lòng nhập mã xác thực bên dưới vào ứng dụng:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="display: inline-block; padding: 16px 40px; font-size: 36px; font-weight: bold; letter-spacing: 12px; color: #28a745; background-color: #f0fff4; border: 2px dashed #28a745; border-radius: 8px;">
+                ${otpCode}
+              </div>
             </div>
-            <p>Nếu nút trên không hoạt động, bạn cũng có thể sao chép và dán liên kết dưới đây vào trình duyệt của mình:</p>
-            <p><a href="${confirmLink}" style="color: #28a745; word-break: break-word;">${confirmLink}</a></p>
+            <p style="text-align: center; color: #888; font-size: 14px;">Mã xác thực có hiệu lực trong <strong>10 phút</strong>.</p>
+            <p>Nếu bạn không yêu cầu đăng ký tài khoản, vui lòng bỏ qua email này.</p>
             <p>Trân trọng,<br/>Đội ngũ hỗ trợ</p>
           </div>
           <div style="background-color: #f1f1f1; text-align: center; padding: 10px; font-size: 12px; color: #666;">

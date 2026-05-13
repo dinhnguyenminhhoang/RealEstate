@@ -23,6 +23,10 @@ const RolesUser = {
   ADMIN: "ADMIN",
 };
 
+const generateOtpCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 class AccessService {
   static singUp = async ({
     userName,
@@ -37,6 +41,11 @@ class AccessService {
       throw new badRequestError("error user already rigisted");
     }
     const passwordHash = await bcrypt.hash(password, 10);
+
+    const otpCode = generateOtpCode();
+    const otpCodeHash = await bcrypt.hash(otpCode, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
     const user = await User.create({
       userName,
       email,
@@ -46,31 +55,22 @@ class AccessService {
       address,
       taxCode,
       status: "active",
+      verificationCode: otpCodeHash,
+      verificationCodeExpiry: otpExpiry,
     });
-    const key = crypto.randomBytes(64).toString(`hex`);
-    const tokens = await createTokenPair(
-      {
-        userId: user._id,
-        email: user.email,
-        userName: user.userName,
-        phone: user.phone,
-        type: "confirm",
-      },
-      key
-    );
-    await KeyTokenService.createKeyToken({
-      userId: user._id,
-      key,
-    });
-    const confirmAccountLink = `${process.env.BASE_URL_CLIENT}/confirm-account/${tokens.accessToken}`;
-    const confirmAccountFormContent = confirmAccountForm(confirmAccountLink);
+
+    // Send OTP code via email
+    const confirmAccountFormContent = confirmAccountForm(otpCode);
     await sendEmail(
       user.email,
       confirmAccountFormContent.title,
-      confirmAccountFormContent.body
+      confirmAccountFormContent.body,
     );
+
     return {
-      data: null,
+      data: {
+        email: user.email,
+      },
     };
   };
   static login = async ({ email, password }) => {
@@ -95,7 +95,7 @@ class AccessService {
         phone,
         role: roles,
       },
-      key
+      key,
     );
     await KeyTokenService.createKeyToken({
       userId: userId,
@@ -112,58 +112,129 @@ class AccessService {
   };
   static forgotPassword = async (payload) => {
     const { email } = payload;
+    if (!email) throw new badRequestError("Vui lòng nhập email");
+
     const user = await findByEmail({ email });
     if (!user?._id) throw new NotFoundError("Not found User");
-    const key = crypto.randomBytes(64).toString(`hex`);
-    const tokens = await createTokenPair(
-      {
-        userId: user._id,
-        email: user.email,
-        userName: user.userName,
-        phone: user.phone,
-        type: "resetPassword",
-      },
-      key
-    );
-    await KeyTokenService.createKeyToken({
-      userId: user._id,
-      key,
+
+    const otpCode = generateOtpCode();
+    const otpCodeHash = await bcrypt.hash(otpCode, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    await User.findByIdAndUpdate(user._id, {
+      resetPasswordCode: otpCodeHash,
+      resetPasswordCodeExpiry: otpExpiry,
     });
-    const resetLink = `${process.env.BASE_URL_CLIENT}/reset-password/${tokens.accessToken}`;
-    const resetPasswordFormContent = resetPasswordForm(resetLink);
+
+    const resetPasswordFormContent = resetPasswordForm(otpCode);
     await sendEmail(
       user.email,
       resetPasswordFormContent.title,
-      resetPasswordFormContent.body
+      resetPasswordFormContent.body,
     );
-    return "OK";
+
+    return {
+      email: user.email,
+    };
   };
-  static resetPassword = async (payload, user, keyStore) => {
-    const { userId, email } = user;
-    const { password } = payload;
+  static resetPassword = async (payload) => {
+    const { email, code, password } = payload;
+    if (!email || !code || !password) {
+      throw new badRequestError("Vui lòng nhập đầy đủ thông tin");
+    }
+
     const userExiting = await findByEmail({ email });
-    if (!userExiting?._id && userId) throw new NotFoundError("Not found User");
+    if (!userExiting?._id) throw new NotFoundError("Not found User");
+
+    if (!userExiting.resetPasswordCode || !userExiting.resetPasswordCodeExpiry) {
+      throw new badRequestError(
+        "Không có mã đặt lại mật khẩu. Vui lòng yêu cầu gửi lại mã",
+      );
+    }
+
+    if (new Date() > new Date(userExiting.resetPasswordCodeExpiry)) {
+      throw new badRequestError(
+        "Mã đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu gửi lại mã",
+      );
+    }
+
+    const isMatch = await bcrypt.compare(code, userExiting.resetPasswordCode);
+    if (!isMatch) {
+      throw new badRequestError("Mã đặt lại mật khẩu không đúng");
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    const userUpdated = await User.findOneAndUpdate(userExiting._id, {
-      ...userExiting,
+    const userUpdated = await User.findByIdAndUpdate(userExiting._id, {
       password: passwordHash,
+      resetPasswordCode: null,
+      resetPasswordCodeExpiry: null,
     });
-    if (userUpdated) {
-      await KeyTokenService.removeKeyById(keyStore._id);
-    } else throw badRequestError("reset password faild");
+    if (!userUpdated) throw new badRequestError("reset password faild");
+
     return "OK";
   };
-  static confirmAccount = async (user, keyStore) => {
-    const { userId, email } = user;
-    const userExiting = await findByEmail({ email });
-    if (!userExiting?._id && userId) throw new NotFoundError("Not found User");
-    const userUpdated = await User.findOneAndUpdate(userExiting._id, {
-      ...userExiting,
+  static verifyOtp = async ({ email, code }) => {
+    const user = await findByEmail({ email });
+    if (!user) throw new NotFoundError("Không tìm thấy người dùng");
+
+    if (user.verification) {
+      throw new badRequestError("Tài khoản đã được xác thực");
+    }
+
+    if (!user.verificationCode || !user.verificationCodeExpiry) {
+      throw new badRequestError(
+        "Không có mã xác thực. Vui lòng yêu cầu gửi lại mã",
+      );
+    }
+
+    // Check expiry
+    if (new Date() > new Date(user.verificationCodeExpiry)) {
+      throw new badRequestError(
+        "Mã xác thực đã hết hạn. Vui lòng yêu cầu gửi lại mã",
+      );
+    }
+
+    // Compare OTP code
+    const isMatch = await bcrypt.compare(code, user.verificationCode);
+    if (!isMatch) {
+      throw new badRequestError("Mã xác thực không đúng");
+    }
+
+    // Update user verification status
+    await User.findByIdAndUpdate(user._id, {
       verification: true,
+      verificationCode: null,
+      verificationCodeExpiry: null,
     });
-    if (userUpdated) {
-      await KeyTokenService.removeKeyById(keyStore._id);
-    } else throw badRequestError("reset password faild");
+
+    return "OK";
+  };
+  static resendOtp = async ({ email }) => {
+    const user = await findByEmail({ email });
+    if (!user) throw new NotFoundError("Không tìm thấy người dùng");
+
+    if (user.verification) {
+      throw new badRequestError("Tài khoản đã được xác thực");
+    }
+
+    // Generate new OTP code
+    const otpCode = generateOtpCode();
+    const otpCodeHash = await bcrypt.hash(otpCode, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await User.findByIdAndUpdate(user._id, {
+      verificationCode: otpCodeHash,
+      verificationCodeExpiry: otpExpiry,
+    });
+
+    // Send OTP code via email
+    const confirmAccountFormContent = confirmAccountForm(otpCode);
+    await sendEmail(
+      user.email,
+      confirmAccountFormContent.title,
+      confirmAccountFormContent.body,
+    );
+
     return "OK";
   };
   static Logout = async (keyStore) => {

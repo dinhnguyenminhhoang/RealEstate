@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Keyboard,
 } from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useAuthForm } from "@/hooks/useAuthForm";
 import { useNotification } from "@/hooks/useNotification";
 
@@ -24,170 +26,279 @@ export default function SignUpScreen() {
     address: "",
     taxCode: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
+
+  const emailRef = useRef<any>(null);
+  const phoneRef = useRef<any>(null);
+  const addressRef = useRef<any>(null);
+  const taxCodeRef = useRef<any>(null);
+  const passwordRef = useRef<any>(null);
+  const confirmPasswordRef = useRef<any>(null);
+
   const { loading, handleSignUp } = useAuthForm();
   const { showError } = useNotification();
 
-  const updateField = (field: string, value: string) =>
-    setForm((p) => ({ ...p, [field]: value }));
+  const updateField = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const canSubmit =
+    form.userName.trim().length > 0 &&
+    form.email.trim().length > 0 &&
+    form.phone.trim().length > 0 &&
+    form.address.trim().length > 0 &&
+    form.password.length >= 6 &&
+    form.confirmPassword.length >= 6;
 
   const onSubmit = () => {
+    Keyboard.dismiss();
+
+    const payload = {
+      userName: form.userName.trim(),
+      email: form.email.trim().toLowerCase(),
+      phone: form.phone.trim(),
+      password: form.password,
+      address: form.address.trim(),
+      taxCode: form.taxCode.trim(),
+    };
+
     if (
-      !form.userName ||
-      !form.email ||
-      !form.phone ||
-      !form.password ||
-      !form.address
+      !payload.userName ||
+      !payload.email ||
+      !payload.phone ||
+      !payload.password ||
+      !payload.address
     ) {
       return showError("Vui lòng điền đầy đủ thông tin bắt buộc");
     }
-    if (form.password !== form.confirmPassword)
-      return showError("Mật khẩu xác nhận không khớp");
-    if (form.password.length < 6)
+
+    if (form.password.length < 6) {
       return showError("Mật khẩu phải có ít nhất 6 ký tự");
-    const { confirmPassword, ...payload } = form;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      return showError("Mật khẩu xác nhận không khớp");
+    }
+
     handleSignUp(payload);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.flex1}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          contentContainerStyle={styles.scrollContent}
         >
-          {/* Header */}
-          <View style={styles.headerContainer}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>BĐS</Text>
+          <View style={styles.header}>
+            <View style={styles.logoShadow}>
+              <View style={styles.logoContainer}>
+                <Text style={styles.logoText}>BĐS</Text>
+              </View>
             </View>
+
             <Text style={styles.title}>Tạo tài khoản</Text>
+
             <Text style={styles.subtitle}>
-              Đăng ký để bắt đầu giao dịch bất động sản
+              Đăng ký để đăng tin, quản lý hồ sơ và theo dõi giao dịch bất động
+              sản của bạn.
             </Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.formContainer}>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Thông tin cá nhân</Text>
+              <Text style={styles.requiredText}>* Bắt buộc</Text>
+            </View>
+
             <TextInput
               label="Họ và tên *"
               value={form.userName}
-              onChangeText={(v) => updateField("userName", v)}
+              onChangeText={(value) => updateField("userName", value)}
               mode="outlined"
-              multiline={false}
               left={<TextInput.Icon icon="account-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              autoCapitalize="words"
+              blurOnSubmit={false}
+              onSubmitEditing={() => emailRef.current?.focus()}
             />
+
             <TextInput
+              ref={emailRef}
               label="Email *"
               value={form.email}
-              onChangeText={(v) => updateField("email", v)}
+              onChangeText={(value) => updateField("email", value)}
               mode="outlined"
               keyboardType="email-address"
+              inputMode="email"
               autoCapitalize="none"
-              multiline={false}
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
               left={<TextInput.Icon icon="email-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => phoneRef.current?.focus()}
             />
+
             <TextInput
+              ref={phoneRef}
               label="Số điện thoại *"
               value={form.phone}
-              onChangeText={(v) => updateField("phone", v)}
+              onChangeText={(value) => updateField("phone", value)}
               mode="outlined"
               keyboardType="phone-pad"
-              multiline={false}
+              inputMode="tel"
+              autoComplete="tel"
+              textContentType="telephoneNumber"
               left={<TextInput.Icon icon="phone-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => addressRef.current?.focus()}
             />
+
             <TextInput
+              ref={addressRef}
               label="Địa chỉ *"
               value={form.address}
-              onChangeText={(v) => updateField("address", v)}
+              onChangeText={(value) => updateField("address", value)}
               mode="outlined"
-              multiline={false}
+              autoComplete="street-address"
+              textContentType="fullStreetAddress"
               left={<TextInput.Icon icon="map-marker-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => taxCodeRef.current?.focus()}
             />
+
             <TextInput
+              ref={taxCodeRef}
               label="Mã số thuế"
               value={form.taxCode}
-              onChangeText={(v) => updateField("taxCode", v)}
+              onChangeText={(value) => updateField("taxCode", value)}
               mode="outlined"
-              multiline={false}
+              keyboardType="number-pad"
+              inputMode="numeric"
               left={<TextInput.Icon icon="file-document-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
+
+            <View style={styles.sectionDivider} />
+
+            <Text style={styles.sectionTitle}>Bảo mật tài khoản</Text>
+
             <TextInput
+              ref={passwordRef}
               label="Mật khẩu *"
               value={form.password}
-              onChangeText={(v) => updateField("password", v)}
+              onChangeText={(value) => updateField("password", value)}
               mode="outlined"
-              multiline={false}
               secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="new-password"
+              textContentType="newPassword"
               left={<TextInput.Icon icon="lock-outline" />}
               right={
                 <TextInput.Icon
-                  icon={showPassword ? "eye-off" : "eye"}
-                  onPress={() => setShowPassword(!showPassword)}
+                  icon={showPassword ? "eye-off-outline" : "eye-outline"}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  forceTextInputFocus={false}
                 />
               }
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
             />
+
+            <Text style={styles.helperText}>Mật khẩu tối thiểu 6 ký tự.</Text>
+
             <TextInput
+              ref={confirmPasswordRef}
               label="Xác nhận mật khẩu *"
               value={form.confirmPassword}
-              onChangeText={(v) => updateField("confirmPassword", v)}
+              onChangeText={(value) => updateField("confirmPassword", value)}
               mode="outlined"
-              multiline={false}
               secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="new-password"
+              textContentType="newPassword"
               left={<TextInput.Icon icon="lock-check-outline" />}
-              outlineColor="#D1D5DB"
+              outlineColor="#E5E7EB"
               activeOutlineColor="#DC2626"
               textColor="#111827"
               style={styles.input}
+              outlineStyle={styles.inputOutline}
+              returnKeyType="done"
+              onSubmitEditing={onSubmit}
             />
+
             <Button
               mode="contained"
               onPress={onSubmit}
               loading={loading}
-              disabled={loading}
+              disabled={loading || !canSubmit}
               buttonColor="#DC2626"
-              textColor="white"
+              textColor="#FFFFFF"
               contentStyle={styles.buttonContent}
               labelStyle={styles.buttonLabel}
-              style={styles.button}
+              style={[
+                styles.button,
+                (loading || !canSubmit) && styles.buttonDisabled,
+              ]}
             >
-              Đăng ký
+              {loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
             </Button>
           </View>
 
-          {/* Footer */}
           <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Đã có tài khoản? </Text>
+            <Text style={styles.footerText}>Đã có tài khoản?</Text>
+
             <Link href="/(auth)/sign-in" asChild>
-              <Pressable>
-                <Text style={styles.footerLink}>Đăng nhập</Text>
+              <Pressable hitSlop={10}>
+                <Text style={styles.footerLink}> Đăng nhập ngay</Text>
               </Pressable>
             </Link>
           </View>
@@ -200,66 +311,142 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F9FAFB",
   },
   flex1: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
   },
-  headerContainer: {
+  header: {
     alignItems: "center",
-    marginTop: 32,
-    marginBottom: 32,
+    paddingTop: 28,
+    paddingBottom: 24,
   },
-  logoContainer: {
-    width: 64,
-    height: 64,
-    backgroundColor: "#DC2626",
-    borderRadius: 16,
+  logoShadow: {
+    width: 78,
+    height: 78,
+    borderRadius: 24,
+    backgroundColor: "#FEE2E2",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  logoContainer: {
+    width: 62,
+    height: 62,
+    backgroundColor: "#DC2626",
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 22,
-    fontWeight: "bold",
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "900",
     color: "#111827",
   },
   subtitle: {
     fontSize: 14,
     color: "#6B7280",
-    marginTop: 4,
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 21,
+    paddingHorizontal: 8,
   },
-  formContainer: {
-    gap: 12,
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  requiredText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#DC2626",
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
+    marginVertical: 6,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    marginTop: 4,
+    marginBottom: 2,
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
+    marginBottom: 12,
+  },
+  inputOutline: {
+    borderRadius: 14,
+  },
+  helperText: {
+    marginTop: -6,
+    marginBottom: 10,
+    fontSize: 12,
+    color: "#6B7280",
   },
   button: {
     marginTop: 8,
-    borderRadius: 10,
+    borderRadius: 16,
+    shadowColor: "#DC2626",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  buttonDisabled: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonContent: {
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   buttonLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   footerContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 24,
-    marginBottom: 32,
+    alignItems: "center",
+    marginTop: 22,
+    marginBottom: 8,
   },
   footerText: {
     color: "#6B7280",
@@ -268,6 +455,6 @@ const styles = StyleSheet.create({
   footerLink: {
     color: "#DC2626",
     fontSize: 15,
-    fontWeight: "bold",
+    fontWeight: "800",
   },
 });

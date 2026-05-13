@@ -11,6 +11,11 @@ const findByEmail = async ({
     roles: 1,
     userName: 1,
     phone: 1,
+    verification: 1,
+    verificationCode: 1,
+    verificationCodeExpiry: 1,
+    resetPasswordCode: 1,
+    resetPasswordCodeExpiry: 1,
   },
 }) => {
   return await User.findOne({ email: email }).select(seclect).lean();

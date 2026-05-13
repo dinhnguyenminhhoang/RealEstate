@@ -7,28 +7,42 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Keyboard,
 } from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { forgotPasswordApi } from "@/services/authService";
 import { useNotification } from "@/hooks/useNotification";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const { showSuccess, showError, handleError } = useNotification();
+
+  const { showSuccess, handleError } = useNotification();
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const isSubmitDisabled = loading || !normalizedEmail;
 
   const onSubmit = async () => {
-    if (!email.trim()) return showError("Vui lòng nhập email");
+    if (isSubmitDisabled) return;
+
+    Keyboard.dismiss();
 
     setLoading(true);
+
     try {
-      const res: any = await forgotPasswordApi({ email: email.trim() });
+      const res: any = await forgotPasswordApi({
+        email: normalizedEmail,
+      });
+
       if (res.status === 200) {
-        setSent(true);
-        showSuccess("Đã gửi link đặt lại mật khẩu vào email của bạn");
+        showSuccess("Đã gửi mã đặt lại mật khẩu vào email của bạn");
+        router.replace({
+          pathname: "/(auth)/reset-password",
+          params: { email: normalizedEmail },
+        });
       }
     } catch (error) {
       handleError(error);
@@ -37,88 +51,94 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-  if (sent) {
-    return (
-      <SafeAreaView style={styles.safeAreaCenter}>
-        <Text style={styles.successIcon}>📧</Text>
-        <Text style={styles.successTitle}>Kiểm tra email của bạn</Text>
-        <Text style={styles.successSubtitle}>
-          Chúng tôi đã gửi link đặt lại mật khẩu đến{"\n"}
-          <Text style={styles.boldText}>{email}</Text>
-        </Text>
-        <Button
-          mode="contained"
-          onPress={() => router.replace("/(auth)/sign-in")}
-          buttonColor="#DC2626"
-          style={styles.backButton}
-          contentStyle={styles.backButtonContent}
-        >
-          Quay lại Đăng nhập
-        </Button>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.flex1}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.headerContainer}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>🔒</Text>
+          <View style={styles.contentWrapper}>
+            <View style={styles.header}>
+              <View style={styles.logoShadow}>
+                <View style={styles.logoContainer}>
+                  <Text style={styles.logoText}>🔒</Text>
+                </View>
+              </View>
+
+              <Text style={styles.title}>Quên mật khẩu?</Text>
+
+              <Text style={styles.subtitle}>
+                Nhập email đã đăng ký, chúng tôi sẽ gửi mã đặt lại mật khẩu
+                cho bạn.
+              </Text>
             </View>
-            <Text style={styles.title}>Quên mật khẩu?</Text>
-            <Text style={styles.subtitle}>
-              Nhập email đã đăng ký, chúng tôi sẽ gửi{"\n"}link đặt lại mật khẩu
-              cho bạn
-            </Text>
-          </View>
 
-          <View style={styles.formContainer}>
-            <TextInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              mode="outlined"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              multiline={false}
-              left={<TextInput.Icon icon="email-outline" />}
-              outlineColor="#D1D5DB"
-              activeOutlineColor="#DC2626"
-              textColor="#111827"
-              style={styles.input}
-            />
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Khôi phục tài khoản</Text>
+                <Text style={styles.cardHint}>Email</Text>
+              </View>
 
-            <Button
-              mode="contained"
-              onPress={onSubmit}
-              loading={loading}
-              disabled={loading || !email.trim()}
-              buttonColor="#DC2626"
-              textColor="white"
-              contentStyle={styles.buttonContent}
-              labelStyle={styles.buttonLabel}
-              style={styles.button}
-            >
-              Gửi link đặt lại
-            </Button>
-          </View>
+              <TextInput
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                mode="outlined"
+                keyboardType="email-address"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                left={<TextInput.Icon icon="email-outline" />}
+                outlineColor="#E5E7EB"
+                activeOutlineColor="#DC2626"
+                textColor="#111827"
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                returnKeyType="send"
+                onSubmitEditing={onSubmit}
+              />
 
-          {/* Back */}
-          <View style={styles.footerContainer}>
-            <Link href="/(auth)/sign-in" asChild>
-              <Pressable style={styles.backLinkContainer}>
-                <Text style={styles.backLinkText}>← Quay lại Đăng nhập</Text>
-              </Pressable>
-            </Link>
+              <Text style={styles.helperText}>
+                Mã đặt lại mật khẩu sẽ được gửi đến email này nếu tài khoản
+                tồn tại trong hệ thống.
+              </Text>
+
+              <Button
+                mode="contained"
+                onPress={onSubmit}
+                loading={loading}
+                disabled={isSubmitDisabled}
+                buttonColor="#DC2626"
+                textColor="#FFFFFF"
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+                style={[
+                  styles.primaryButton,
+                  isSubmitDisabled && styles.buttonDisabled,
+                ]}
+              >
+                {loading ? "Đang gửi..." : "Gửi mã đặt lại"}
+              </Button>
+            </View>
+
+            <View style={styles.footerContainer}>
+              <Link href="/(auth)/sign-in" asChild>
+                <Pressable hitSlop={10} style={styles.backLinkContainer}>
+                  <Text style={styles.backLinkText}>← Quay lại đăng nhập</Text>
+                </Pressable>
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -129,107 +149,221 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
-  },
-  safeAreaCenter: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
+    backgroundColor: "#F9FAFB",
   },
   flex1: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 26,
+  },
+  logoShadow: {
+    width: 86,
+    height: 86,
+    borderRadius: 28,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  logoContainer: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoText: {
+    fontSize: 30,
+  },
+  title: {
+    fontSize: 29,
+    fontWeight: "900",
+    color: "#111827",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 21,
+    paddingHorizontal: 10,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  cardHint: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#DC2626",
+    backgroundColor: "#FEF2F2",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  input: {
+    backgroundColor: "#FFFFFF",
+    marginBottom: 10,
+  },
+  inputOutline: {
+    borderRadius: 14,
+  },
+  helperText: {
+    fontSize: 12,
+    color: "#6B7280",
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  primaryButton: {
+    borderRadius: 16,
+    shadowColor: "#DC2626",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  buttonDisabled: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  buttonContent: {
+    paddingVertical: 8,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  footerContainer: {
+    alignItems: "center",
+    marginTop: 22,
+    marginBottom: 8,
+  },
+  backLinkContainer: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  backLinkText: {
+    color: "#DC2626",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  successWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  successCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    padding: 22,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  successIconOuter: {
+    width: 96,
+    height: 96,
+    borderRadius: 32,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  successIconInner: {
+    width: 74,
+    height: 74,
+    borderRadius: 26,
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
   },
   successIcon: {
-    fontSize: 60,
-    marginBottom: 16,
+    fontSize: 34,
   },
   successTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "900",
     color: "#111827",
     textAlign: "center",
   },
   successSubtitle: {
     color: "#6B7280",
     textAlign: "center",
-    marginTop: 12,
-    lineHeight: 24,
+    marginTop: 10,
+    lineHeight: 22,
+    fontSize: 14,
   },
-  boldText: {
-    fontWeight: "bold",
-    color: "#111827",
+  emailBox: {
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
   },
-  backButton: {
-    marginTop: 32,
-    width: "100%",
-  },
-  backButtonContent: {
-    paddingVertical: 4,
-  },
-  headerContainer: {
-    alignItems: "center",
-    marginTop: 64,
-    marginBottom: 40,
-  },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: "#FEE2E2",
-    borderRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  logoText: {
-    fontSize: 36,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    marginTop: 8,
+  emailText: {
+    color: "#991B1B",
+    fontWeight: "800",
+    fontSize: 14,
     textAlign: "center",
-    lineHeight: 24,
   },
-  formContainer: {
-    gap: 16,
+  successNote: {
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 14,
+    marginBottom: 22,
+    lineHeight: 20,
+    fontSize: 13,
   },
-  input: {
-    backgroundColor: "#fff",
-  },
-  button: {
-    marginTop: 8,
-    borderRadius: 10,
-  },
-  buttonContent: {
-    paddingVertical: 6,
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  footerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 32,
-  },
-  backLinkContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backLinkText: {
-    color: "#DC2626",
-    fontSize: 16,
-    fontWeight: "500",
+  textButtonLabel: {
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

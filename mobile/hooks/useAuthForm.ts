@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
-import { signupApi } from "@/services/authService";
+import { signupApi, verifyOtpApi, resendOtpApi } from "@/services/authService";
 import { useNotification } from "./useNotification";
 import { SignUpPayload } from "@/types";
 
@@ -33,9 +33,12 @@ export const useAuthForm = () => {
       const res: any = await signupApi(values);
       if (res.status === 201) {
         showSuccess(
-          "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+          "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã xác thực.",
         );
-        router.replace("/(auth)/sign-in");
+        router.replace({
+          pathname: "/(auth)/confirm-account",
+          params: { email: values.email },
+        });
       }
     } catch (error: any) {
       handleError(error);
@@ -44,5 +47,36 @@ export const useAuthForm = () => {
     }
   };
 
-  return { loading, handleSignIn, handleSignUp };
+  const handleVerifyOtp = async (email: string, code: string) => {
+    setLoading(true);
+    try {
+      await verifyOtpApi({ email, code });
+      showSuccess("Xác thực tài khoản thành công! Vui lòng đăng nhập.");
+      router.replace("/(auth)/sign-in");
+    } catch (error: any) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async (email: string) => {
+    setLoading(true);
+    try {
+      await resendOtpApi({ email });
+      showSuccess("Đã gửi lại mã xác thực. Vui lòng kiểm tra email.");
+    } catch (error: any) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    handleSignIn,
+    handleSignUp,
+    handleVerifyOtp,
+    handleResendOtp,
+  };
 };
